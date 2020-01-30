@@ -1,0 +1,11 @@
+[system/setup/cloud-init/datasources]
+Description[de]=Kommaseparierte Liste von Datenquellen für cloud-init: ConfigDrive, Ec2, CloudStack, AltCloud, MAAS, OVF, NoCloud, None
+Description[en]=Comma separated list of data sources for cloud-init: ConfigDrive, Ec2, CloudStack, AltCloud, MAAS, OVF, NoCloud, None
+Type=str
+Categories=cloud-init
+
+[server/cloud-init]
+Description[de]=Aktiviert oder deaktiviert die cloud-init Integration.
+Description[en]=Enable or disable cloud-init integration.
+Type=bool
+Categories=cloud-init

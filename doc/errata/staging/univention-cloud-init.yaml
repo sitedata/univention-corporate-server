@@ -1,0 +1,10 @@
+product: ucs
+release: "4.4"
+version: [5]
+scope: ucs_4.4-0-errata4.4-5
+src: univention-cloud-init
+fix: 
+desc: |
+ This update addresses the following issue:
+ * Adapt `cloud-init` integration to Python 3 and systemd changes.
+bug: [50759]

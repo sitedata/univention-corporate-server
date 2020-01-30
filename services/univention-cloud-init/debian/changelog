@@ -1,3 +1,9 @@
+univention-cloud-init (6.0.0-4) unstable; urgency=medium
+
+  * Bug #50759: Adapt to Python 3 cloud-init and systemd.
+
+ -- Philipp Hahn <hahn@univention.de>  Fri, 24 Jul 2020 13:42:45 +0200
+
 univention-cloud-init (6.0.0-3) unstable; urgency=medium
 
   * Bug #51135: make UCR templates compatible to python3

@@ -1,0 +1,13 @@
+product: ucs
+release: "4.4"
+version: [5]
+scope: ucs_4.2-0
+src: blinker
+fix: 1.3.dfsg2-1
+desc: |
+ This update addresses the following issue:
+ * Move package to maintained as a dependency of cloud-init.
+bug: [50759]
+ignore:
+  - release+scope.consistent
+  - version.scope

@@ -32,16 +32,16 @@
 
 #DEBHELPER#
 
-. /usr/share/univention-lib/all.sh
-
 ucr set system/setup/cloud-init/datasources?"ConfigDrive, Ec2, CloudStack, AltCloud, MAAS, OVF, NoCloud, None" \
 	server/cloud-init?true \
 	system/setup/boot/start=false
 
 # Add serial console output, but spawn login console on tty0
-option="console=tty0 console=ttyS0"
-if ! ucr get grub/append | grep -q "${option}"; then
-	ucr set grub/append="$(ucr get grub/append) ${option}"
+val="$(ucr get grub/append)"
+if ! echo "$val" | grep -q '\<console=tty0\>.*\<console=ttyS0\>'
+then
+	val="$(echo "$val" | tr ' ' '\n' | grep -v '^console=' | tr '\n' ' ')"
+	ucr set grub/append="${val:+$val }console=tty0 console=ttyS0"
 fi
 
 exit 0
