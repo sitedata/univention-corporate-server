@@ -35,6 +35,10 @@ is_ec2 () {
 }
 
 basic_setup () {
+	[ $(ucr get version/version) = "5.0" ] && echo -e "deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.0-0/all/" >> /etc/apt/sources.list
+	[ $(ucr get version/version) = "5.0" ] && echo -e "deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.0-0/\$(ARCH)/" >> /etc/apt/sources.list
+	rdate time.fu-berlin.de || true
+	apt-get update -qq
 	# force dpkg not to call "sync" during package installations/updates
 	echo force-unsafe-io > /etc/dpkg/dpkg.cfg.d/force-unsafe-io
 	if grep "QEMU Virtual CPU" /proc/cpuinfo ; then
@@ -70,8 +74,9 @@ rotate_logfiles () {
 }
 
 jenkins_updates () {
-	ucr set update43/checkfilesystems=no
-	ucr set update44/checkfilesystems=no
+	[ $(ucr get version/version) = "4.4" ] && echo -e "deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.0-0/all/" >> /etc/apt/sources.list
+	[ $(ucr get version/version) = "4.4" ] && echo -e "deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.0-0/\$(ARCH)/" >> /etc/apt/sources.list
+	ucr set update43/checkfilesystems=no update44/checkfilesystems=no update50/checkfilesystems=no
 	local version_version version_patchlevel version_erratalevel target rc=0
 	target="$(echo "${JOB_NAME:-}"|sed -rne 's,.*/UCS-([0-9]+\.[0-9]+-[0-9]+)/.*,\1,p')"
 	# Update UCS@school instances always to latest patchlevel version
@@ -209,6 +214,7 @@ _fix_ssh47233 () { # Bug #47233: ssh connection stuck on reboot
 
 run_setup_join () {
 	local srv rv=0
+	chown _apt /var/cache/univention-system-setup/packages/Packages
 	patch_setup_join # temp. remove me
 	/usr/lib/univention-system-setup/scripts/setup-join.sh ${1:+"$@"} || rv=$?
 	ucr set apache2/startsite='univention/' # Bug #31682
