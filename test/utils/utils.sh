@@ -223,6 +223,8 @@ run_setup_join () {
 		invoke-rc.d "$srv" restart
 	done
 	ucr unset --forced update/available
+	
+	switch_to_test_app_center || true
 
 	# No this breaks univention-check-templates -> 00_checks.81_diagnostic_checks.test _fix_ssh47233  # temp. remove me
 	return $rv
