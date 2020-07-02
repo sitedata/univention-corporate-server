@@ -264,6 +264,7 @@ EOF
 else
 	# shellcheck disable=SC2123
 	PATH="./ucs-ec2-tools${PATH:+:$PATH}"
+	export PYTHONPATH="./ucs-ec2-tools"
 fi
 cmd+=("$exe" -c "$CFG")
 
