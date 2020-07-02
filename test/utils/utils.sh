@@ -198,10 +198,12 @@ _upgrade_to_latest () {
 	done
 }
 
-# temp. patch to retry source.list commit and apt-get update after error
 patch_setup_join () {
+	# temp. patch to retry source.list commit and apt-get update after error
 	local script='{ set -x; nscd -i hosts; grep -H . /etc/resolv.conf /etc/apt/sources.list.d/15_ucs-online-version.list; ifconfig; ping -c 4 "$(ucr get repository/online/server)"; nslookup "$(ucr get repository/online/server)"; sleep 60; ucr commit /etc/apt/sources.list.d/*.list; apt-get update; } ; grep -H . /etc/apt/sources.list.d/15_ucs-online-version.list'
 	sed -i "s~^apt-get update\$~& || $script~" /usr/lib/univention-system-setup/scripts/setup-join.sh
+
+	# sed -i 's#/usr/lib/univention-system-setup/scripts/05_role/10role#/usr/lib/univention-system-setup/scripts/05_role/10role || exit 1#g' /usr/lib/univention-system-setup/scripts/setup-join.sh
 }
 _fix_ssh47233 () { # Bug #47233: ssh connection stuck on reboot
 	local g t
