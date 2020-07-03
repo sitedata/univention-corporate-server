@@ -211,6 +211,7 @@ grep -q '^\w*kvm_template' "$CFG" && KVM=true # if kvm is configure in cfg, use 
 [ "$KVM_BUILD_SERVER" = "EC2" ] && KVM=false
 exe='ucs-ec2-create'
 "$KVM" && exe='ucs-kvm-create'
+exe='ucs-kvm-create'
 
 # start the test
 declare -a cmd=()
