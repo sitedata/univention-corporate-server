@@ -70,6 +70,7 @@ basic_setup () {
 }
 
 rotate_logfiles () {
+	return 0
 	test -x /usr/sbin/logrotate && logrotate -f /etc/logrotate.conf
 }
 
