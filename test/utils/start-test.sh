@@ -282,5 +282,7 @@ done
 
 "$debug" && exit 0
 
+python -c 'import univention.ec2.lib; print(univention.ec2.lib)'
+
 "${cmd[@]}" &&
 	[ -e "./COMMAND_SUCCESS" ]
