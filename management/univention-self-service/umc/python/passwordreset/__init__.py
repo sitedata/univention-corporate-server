@@ -103,6 +103,12 @@ def forward_to_master(func):
 	return _decorator
 
 
+def forward_to_master_if_enabled(func):
+	if ucr.is_false('self-service/allow-saml'):
+		return forward_to_master(func)
+	return func
+
+
 def prevent_denial_of_service(func):
 	def _pretty_time(sec):
 		if sec <= 60:
@@ -219,14 +225,14 @@ class MissingContactInformation(UMC_Error):
 class Instance(Base):
 
 	def init(self):
+		self._usersmod = None
+		self.groupmod = None
+
 		if not ucr.is_true("umc/self-service/enabled"):
 			raise UMC_Error(_('The password reset service is disabled via configuration registry.'), status=503)
 
 		if not IS_SELFSERVICE_MASTER:
 			return
-
-		self._usersmod = None
-		self.groupmod = None
 
 		self.db = TokenDB(MODULE)
 		self.conn = self.db.conn
@@ -269,11 +275,10 @@ class Instance(Base):
 				univention.admin.modules.init(lo, po, self._usersmod)
 		return self._usersmod
 
-	@forward_to_master
-	@prevent_denial_of_service
+	@forward_to_master_if_enabled
 	@sanitize(
-		username=StringSanitizer(required=True, minimum=1),
-		password=StringSanitizer(required=True, minimum=1))
+		username=StringSanitizer(required=False, minimum=1),
+		password=StringSanitizer(required=False, minimum=1))
 	@simple_response
 	def get_contact(self, username, password):
 		"""
@@ -285,7 +290,8 @@ class Instance(Base):
 			msg = _('The account protection was disabled via the Univention Configuration Registry.')
 			MODULE.error('get_contact(): {}'.format(msg))
 			raise UMC_Error(msg)
-		dn, username = self.auth(username, password)
+
+		dn, username = self.authenticate_user(username, password)
 		if self.is_blacklisted(username, 'passwordreset'):
 			raise ServiceForbidden()
 
@@ -301,11 +307,11 @@ class Instance(Base):
 
 	@forward_to_master
 	@sanitize(
-		username=StringSanitizer(required=True, minimum=1),
-		password=StringSanitizer(required=True, minimum=1))
+		username=StringSanitizer(required=False, minimum=1),
+		password=StringSanitizer(required=False, minimum=1))
 	@simple_response
-	def get_user_attributes(self, username, password):
-		dn, username = self.auth(username, password)
+	def get_user_attributes(self, username=None, password=None):  # MUST be supported until UCS 4.4-7 is out of maintenance
+		dn, username = self.authenticate_user(username, password)
 		if self.is_blacklisted(username, 'profiledata'):
 			raise ServiceForbidden()
 
@@ -323,6 +329,25 @@ class Instance(Base):
 		return {
 			'widget_descriptions': widget_descriptions,
 			'layout': layout,
+		}
+
+	@forward_to_master_if_enabled
+	@sanitize(
+		username=StringSanitizer(required=False, minimum=1),
+		password=StringSanitizer(required=False, minimum=1))
+	@simple_response
+	def get_user_attributes_values(self, attributes, username=None, password=None):
+		dn, username = self.authenticate_user(username, password)
+		if self.is_blacklisted(username, 'profiledata'):
+			raise ServiceForbidden()
+
+		user_attributes = [attr.strip() for attr in ucr.get('self-service/udm_attributes', '').split(',')]
+		user = self.get_udm_user_by_dn(dn)
+		user.set_defaults = True
+		user.set_default_values()
+		properties = user.info.copy()
+		return {
+			prop: properties.get(prop) for prop in attributes if user.has_property(prop) and prop in user_attributes
 		}
 
 	@forward_to_master
@@ -404,13 +429,13 @@ class Instance(Base):
 				else:
 					properties[id_].required = True
 
-	@forward_to_master
+	@forward_to_master_if_enabled
 	@sanitize(
-		username=StringSanitizer(required=True, minimum=1),
-		password=StringSanitizer(required=True, minimum=1))
+		username=StringSanitizer(required=False, minimum=1),
+		password=StringSanitizer(required=False, minimum=1))
 	@simple_response
 	def validate_user_attributes(self, username, password, attributes):
-		dn, username = self.auth(username, password)
+		dn, username = self.authenticate_user(username, password)
 		if self.is_blacklisted(username, 'profiledata'):
 			raise ServiceForbidden()
 		return self._validate_user_attributes(attributes)
@@ -458,18 +483,25 @@ class Instance(Base):
 			}
 		return res
 
-	@forward_to_master
+	@forward_to_master_if_enabled
 	@sanitize(
-		username=StringSanitizer(required=True, minimum=1),
-		password=StringSanitizer(required=True, minimum=1))
+		username=StringSanitizer(required=False, minimum=1),
+		password=StringSanitizer(required=False, minimum=1))
 	@simple_response
-	def set_user_attributes(self, username, password, attributes):
-		dn, username = self.auth(username, password)
+	def set_user_attributes(self, attributes, username=None, password=None):
+		dn, username = self.authenticate_user(username, password)
+		username = username or self.username
+		if password:
+			dn, username = self.auth(username, password)
+			lo, po = get_user_connection(binddn=dn, bindpw=password)
+		else:
+			lo = self.get_user_ldap_connection(write=True)
+			po = univention.admin.uldap.position(lo.base)
+
 		if self.is_blacklisted(username, 'profiledata'):
 			raise ServiceForbidden()
 
 		user_attributes = [attr.strip() for attr in ucr.get('self-service/udm_attributes', '').split(',')]
-		lo, po = get_user_connection(binddn=dn, bindpw=password)
 		user = self.usersmod.object(None, lo, po, dn)
 		user.open()
 		for propname, value in attributes.items():
@@ -962,6 +994,16 @@ class Instance(Base):
 			raise ServiceForbidden()
 		return binddn, userdict["uid"][0]
 
+	def authenticate_user(self, username=None, password=None):
+		"""Check if the user is already authenticated (via UMC/SAML login) or use the credentials provided via the form."""
+		if username and password:  # credentials provided, use them
+			dn, username = self.auth(username, password)
+			return (dn, username)
+		elif self.user_dn and self.username:  # logged in via SAML/UMC
+			return (self.user_dn, self.username)
+		else:  # malformed request, cannot really happen
+			raise UMC_Error('Please provide username and password.')
+
 	def set_contact_data(self, dn, email, mobile):
 		try:
 			user = self.get_udm_user_by_dn(userdn=dn, admin=True)
@@ -1024,7 +1066,7 @@ class Instance(Base):
 			with open(dict(ucr)['ad/reset/password']) as fd:
 				reset_password = fd.readline().strip()
 		except (EnvironmentError, KeyError):
-			raise UMC_Error(_('The configuration of the password reset service is not complete. The UCR variables "ad/reset/username" and "ad/reset/password" need to be set properly. Please inform an administration.'), status=500)
+			raise UMC_Error(_('The configuration of the password reset service is not complete. The UCR variables "ad/reset/username" and "ad/reset/password" need to be set properly. Please inform an administrator.'), status=500)
 		process = Popen(['samba-tool', 'user', 'setpassword', '--username', reset_username, '--password', reset_password, '--filter', filter_format('samaccountname=%s', (username,)), '--newpassword', password, '-H', ldb_url], stdout=PIPE, stderr=STDOUT)
 		stdouterr = process.communicate()[0]
 

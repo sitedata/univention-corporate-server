@@ -32,6 +32,7 @@ define([
 	"dojo/_base/lang",
 	"dojo/_base/array",
 	"dojo/on",
+	"dojo/dom-class",
 	"dojo/keys",
 	"dijit/form/Button",
 	"put-selector/put",
@@ -43,7 +44,7 @@ define([
 	"./TextBox",
 	"umc/i18n/tools",
 	"umc/i18n!."
-], function(lang, array, on, keys, Button, put, login, tools, dialog, lib, PasswordBox, TextBox, i18nTools, _) {
+], function(lang, array, on, domClass, keys, Button, put, login, tools, dialog, lib, PasswordBox, TextBox, i18nTools, _) {
 
 	return {
 		hash: 'setcontactinformation',
@@ -56,6 +57,12 @@ define([
 		steps: null,
 
 		startup: function() {
+			login.onInitialLogin(lang.hitch(this, function(username) {
+				this._username.set('value', tools.status('username'));
+				this._username.set('disabled', true);
+				domClass.toggle(this._passwordStep, 'dijitDisplayNone', true);
+				this._getContactInformation(true);
+			}));
 			if (this._username.value !== '') {
 				this._password.focus();
 			} else {
@@ -124,10 +131,6 @@ define([
 				},
 				required: true
 			});
-			login.onInitialLogin(lang.hitch(this, function(username) {
-				this._username.set('value', tools.status('username'));
-				this._username.set('disabled', true);
-			}));
 			this._username.on('keyup', lang.hitch(this, function(evt) {
 				if (evt.keyCode === keys.ENTER) {
 					this._getContactInformation();
@@ -142,7 +145,7 @@ define([
 		 * Creates input field for password.
 		 * */
 		_createPassword: function() {
-			var step = put('li.step');
+			var step = this._passwordStep = put('li.step');
 			var label = put('div.stepLabel', _('Password'));
 			put(step, label);
 			this._password = new PasswordBox({
@@ -176,18 +179,13 @@ define([
 		/**
 		 * Requests available renew options.
 		 * */
-		_getContactInformation: function() {
+		_getContactInformation: function(force) {
 			this._username.set('disabled', true);
-			this._password.set('disabled', true);
 			this._showContactInformationButton.set('disabled', true);
 
 			var validCredentials = this._username.isValid() && this._password.isValid();
-			if (validCredentials) {
-				var data = {
-					'username': this._username.get('value'),
-					'password': this._password.get('value')
-				};
-				tools.umcpCommand('passwordreset/get_contact', data).then(lang.hitch(this, function(data) {
+			if (validCredentials || force) {
+				tools.umcpCommand('passwordreset/get_contact', this.getCredentials(force)).then(lang.hitch(this, function(data) {
 					put(this._showContactInformationButton.domNode, '.dijitDisplayNone');
 					this._createRenewOptions(data.result);
 				}), lang.hitch(this, function(){
@@ -196,12 +194,10 @@ define([
 					this._username.set('disabled', false);
 					//this._username.focus(); Not possible because the error dialog steals the focus
 					this._password.reset();
-					this._password.set('disabled', false);
 				}));
 			} else {
 				this._showContactInformationButton.set('disabled', false);
 				this._username.set('disabled', false);
-				this._password.set('disabled', false);
 				if (!this._username.isValid()) {
 					this._username._hasBeenBlurred = true;
 					this._username.focus();
@@ -212,6 +208,16 @@ define([
 					this._password.validate();
 				}
 			}
+		},
+
+		getCredentials: function(force) {
+			if (force) {
+				return {};
+			}
+			return {
+				'username': this._username.get('value'),
+				'password': this._password.get('value')
+			};
 		},
 
 		/**
@@ -359,7 +365,6 @@ define([
 			this._showContactInformationButton.set('disabled', false);
 			this._username.reset();
 			this._password.reset();
-			this._password.set('disabled', false);
 			// destroy email input widget
 			array.forEach(this._renewInputs, function(renewInput) {
 				var Input = dijit.byId(renewInput.id);
