@@ -39,6 +39,7 @@ basic_setup () {
 	[ $(ucr get version/version) = "5.0" ] && echo -e "deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.0-0/\$(ARCH)/" >> /etc/apt/sources.list
 	rdate time.fu-berlin.de || true
 	apt-get update -qq
+	ucr set directory/manager/cmd/debug/level='3'
 	# force dpkg not to call "sync" during package installations/updates
 	echo force-unsafe-io > /etc/dpkg/dpkg.cfg.d/force-unsafe-io
 	if grep "QEMU Virtual CPU" /proc/cpuinfo ; then
