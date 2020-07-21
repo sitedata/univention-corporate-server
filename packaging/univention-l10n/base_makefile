@@ -40,10 +40,6 @@ include all_targets.mk
 .PHONY: install
 install: $(ALL_TARGETS)
 
-.PHONY: clean
-clean:
-	$(RM) $(ALL_TARGETS)
-
 %.mo:
 	install -d -m 755 "$(@D)"
 	msgfmt --check --output-file="$@" "$<"
@@ -51,4 +47,4 @@ clean:
 %.json:
 	dh-umc-po2json "$<"  # creates .json file in the same directory as the .po file
 	install -d -m 755 "$(@D)"
-	install -p -m 644 "$(<:%.json=%.po)" "$@"
+	mv "$(<:%.po=%.json)" "$@"
