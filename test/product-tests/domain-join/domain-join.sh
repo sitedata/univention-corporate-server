@@ -55,6 +55,7 @@ test_user () {
 test_login_as_diff_user () {
 	local user=${1:?missing user}
 	local password=${2:?missing password}
+	echo "Login as User: '$user'"
 	. product-tests/domain-join/login "$user" "$password"
 }
 
@@ -62,13 +63,15 @@ test_change_password () {
 	local user=${1:?missing user}
 	local old_password=${2:?missing old password}
 	local new_password=${3:?missing new password}
+	echo "Changing password of User: '$user'"
 	. product-tests/domain-join/kpasswd "$user" "$old_password" "$new_password" 
 }
 
 test_check_dir () {
 	local user=${1:?missing user}
 	local directory=${2:?missing dir}
-	[ -d '/"$directory"/"$user"/' ] && echo "Directory '/"$directory"/"$user"/' found" || echo "Directory '/"$directory"/"$user"/' not found"
+	echo "Checking directory '/"$directory"/"$user"/'"
+	[ -d '/"$directory"/"$user"/' ] && echo "Directory '/"$directory"/"$user"/' found"
 }
 
 run_tests () {
