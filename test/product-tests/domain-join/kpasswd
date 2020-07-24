@@ -15,6 +15,3 @@ send "$newpassword\n"
 
 expect "Verify password"
 send "$newpassword\n"
-
-
-interact

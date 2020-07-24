@@ -8,5 +8,3 @@ spawn login "$user"
 
 expect "Password:"
 send "$password\n";
-
-interact
