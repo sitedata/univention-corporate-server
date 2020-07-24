@@ -68,7 +68,7 @@ test_change_password () {
 test_check_dir () {
 	local user=${1:?missing user}
 	local directory=${2:?missing dir}
-	[ -d "/$directory/$user/" ] && echo "Directory '/"$directory"/"$user"/' found" || echo "Directory '/"$directory"/"$user"/' not found"
+	[ -d '/"$directory"/"$user"/' ] && echo "Directory '/"$directory"/"$user"/' found" || echo "Directory '/"$directory"/"$user"/' not found"
 }
 
 run_tests () {
