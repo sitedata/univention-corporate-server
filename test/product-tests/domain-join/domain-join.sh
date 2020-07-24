@@ -55,14 +55,14 @@ test_user () {
 test_login_as_diff_user () {
 	local user=${1:?missing user}
 	local password=${2:?missing password}
-	. product-tests/domain-join/login.txt "$user" "$password"
+	. product-tests/domain-join/login "$user" "$password"
 }
 
 test_change_password () {
 	local user=${1:?missing user}
 	local old_password=${2:?missing old password}
 	local new_password=${3:?missing new password}
-	. product-tests/domain-join/kpasswd.txt "$user" "$old_password" "$new_password" 
+	. product-tests/domain-join/kpasswd "$user" "$old_password" "$new_password" 
 }
 
 test_check_dir () {
