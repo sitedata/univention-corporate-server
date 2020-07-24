@@ -56,7 +56,7 @@ test_login_as_diff_user () {
 	local user=${1:?missing user}
 	local password=${2:?missing password}
 	echo "Login as User: '$user'"
-	. product-tests/domain-join/login "$user" "$password"
+	expect product-tests/domain-join/login "$user" "$password"
 }
 
 test_change_password () {
@@ -64,7 +64,7 @@ test_change_password () {
 	local old_password=${2:?missing old password}
 	local new_password=${3:?missing new password}
 	echo "Changing password of User: '$user'"
-	. product-tests/domain-join/kpasswd "$user" "$old_password" "$new_password" 
+	expect product-tests/domain-join/kpasswd "$user" "$old_password" "$new_password" 
 }
 
 test_check_dir () {
