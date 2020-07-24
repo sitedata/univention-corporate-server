@@ -3,7 +3,7 @@ set -x
 
 install_testing_version () {
 	local branch=${1:?missing branch}
-	DEBIAN_FRONTEND=noninteractive apt install -y git curl build-essential dpkg-dev debhelper python3 dh-python python3-all python-setuptools
+	DEBIAN_FRONTEND=noninteractive apt install -y git curl build-essential dpkg-dev debhelper python3 dh-python python3-all python-setuptools expect
 	curl -k  https://billy.knut.univention.de/ucs-root-ca.crt > /usr/local/share/ca-certificates/billy.crt
 	update-ca-certificates -f
 	git clone https://git.knut.univention.de/univention/univention-domain-join.git
@@ -15,9 +15,21 @@ install_testing_version () {
 	DEBIAN_FRONTEND=noninteractive apt-get -y -f install
 }
 
-install_released_version_ubuntu () {
-	add-apt-repository -y ppa:univention-dev/ppa
-	DEBIAN_FRONTEND=noninteractive apt-get install univention-domain-join univention-domain-join-cli
+install_released_version () {
+	# TODO
+	:
+}
+
+create_user () {
+	local user=${1:?missing username}
+	local lastname=${2:?missing lastname}
+	local password=${3:?missing password}
+
+	univention-directory-manager users/user create \
+	--position "cn=users,$(ucr get ldap/base)" \
+    --set username="$user" \
+    --set lastname="$lastname" \
+    --set password="$password"
 }
 
 test_univention_domain_join_cli () {
@@ -40,14 +52,41 @@ test_user () {
 	sshpass -p "$password" ssh -o StrictHostKeyChecking=no "$username@$(hostname)" "whoami"
 }
 
+test_login_as_diff_user () {
+	local user=${1:?missing user}
+	local password=${2:?missing password}
+	. product-tests/domain-join/login.txt "$user" "$password"
+}
+
+test_change_password () {
+	local user=${1:?missing user}
+	local old_password=${2:?missing old password}
+	local new_password=${3:?missing new password}
+	. product-tests/domain-join/kpasswd.txt "$user" "$old_password" "$new_password" 
+}
+
+test_check_dir () {
+	local user=${1:?missing user}
+	local directory=${2:?missing dir}
+	[ -d "/$directory/$user/" ] && echo "Directory '/"$directory"/"$user"/' found" || echo "Directory '/"$directory"/"$user"/' not found"
+}
+
 run_tests () {
 	local run_tests=${1:?missing run tests parameter}
 	local dc_ip=${2:?missing dc ip}
 	local admin=${3:?missing admin account}
-	local password=${4:?missing admin account password}
-
+	local admin_password=${4:?missing admin account password}
+	local user=${5:?missing user account}
+	local user_lastname=${6:?missing user lastname}
+	local user_password=${7:?missing user password}
+	local new_user_password=${8:?missing new user password}
+	local directory=${9:?missing directory}
+	
 	if $run_tests; then
-		test_univention_domain_join_cli "$dc_ip" "$admin" "$password"
-		test_user "$admin" "$password"
+		test_univention_domain_join_cli "$dc_ip" "$admin" "$admin_password"
+		test_user "$admin" "$admin_password"
+		test_login_as_diff_user "$user" "$user_password"
+		test_check_dir "$user" "$directory"
+		test_change_password "$user" "$user_password" "$new_user_password"
 	fi
 }
