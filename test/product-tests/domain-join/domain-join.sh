@@ -1,6 +1,15 @@
 set -e
 set -x
 
+install_domain_join() {
+	local branch=${2:?missing branch}
+	if [ $1 == "testing" ]; then
+		install_testing_version $branch
+	else
+		install_released_version
+	fi
+
+}
 install_testing_version () {
 	local branch=${1:?missing branch}
 	DEBIAN_FRONTEND=noninteractive apt install -y git curl build-essential dpkg-dev debhelper python3 dh-python python3-all python-setuptools expect
@@ -15,10 +24,12 @@ install_testing_version () {
 	DEBIAN_FRONTEND=noninteractive apt-get -y -f install
 }
 
-install_released_version_ubuntu () {
+
+install_released_version() {
 	add-apt-repository -y ppa:univention-dev/ppa
-	DEBIAN_FRONTEND=noninteractive apt-get install univention-domain-join univention-domain-join-cli
+	DEBIAN_FRONTEND=noninteractive apt-get install univention-domain-join univention-domain-join-cli expect
 }
+
 
 create_user () {
 	local user=${1:?missing username}
