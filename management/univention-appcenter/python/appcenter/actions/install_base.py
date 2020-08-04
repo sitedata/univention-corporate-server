@@ -321,6 +321,40 @@ class InstallRemoveUpgrade(Register):
 					ret = self._call_script('/usr/sbin/univention-run-join-scripts', '-dcaccount', username, '-dcpwd', password_file)
 		return ret
 
+		def _call_all_hooks(self, directory):
+			"""
+			iterates over all files in a directory ordered by name and executes
+			files marked as executable.
+			"""
+			from subprocess import call
+			from os import listdir, path, access, X_OK
+
+			for filename in sorted(listdir(directory)):
+				absolute_path = directory + filename
+
+				# sanity check: is it really a file (symlinks and directories are not allowed)...
+				if path.isfile(absolute_path):
+					# Further ensure that the executable bit is set on the file...
+					if access(absolute_path, X_OK):
+						try:
+							call(absolute_path)
+						except Exception:  # any exception is equally indifferent
+							self.log('Custom hook script failed: {script_name}').format(script_name=absolute_path)
+					else:
+						self.log('Skipping {script_name}, because it is not marked as executable.').format(script_name=absolute_path)
+
+		def _call_install_hooks(self, app, args):
+			self._call_all_hooks(ucr_get("appcenter/hook_directories/install",
+				"/var/lib/univention-appcenter/apps/{appid}/local/hooks/post-install.d/").format(appid=app))
+
+		def _call_post_remove_hooks(self, app, args):
+			self._call_all_hooks(ucr_get("appcenter/hook_directories/remove",
+				"/var/lib/univention-appcenter/apps/{appid}/local/hooks/post-remove.d/").format(appid=app))
+
+		def _call_upgrade_hooks(self, app, args):
+			self._call_all_hooks(ucr_get("appcenter/hook_directories/upgrade",
+				"/var/lib/univention-appcenter/apps/{appid}/local/hooks/post-upgrade.d/").format(appid=app))
+
 	def _get_configure_settings(self, app, filter_action=True):
 		set_vars = {}
 		for setting in app.get_settings():

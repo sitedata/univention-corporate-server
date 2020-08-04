@@ -74,6 +74,7 @@ class Remove(InstallRemoveUpgrade):
 		self._unregister_files(app)
 		self.percentage = 80
 		self._call_unjoin_script(app, args)
+		self._call_post_remove_hooks(app, args)
 		if not app.docker:
 			ucr_save({'appcenter/prudence/docker/%s' % app.id: 'yes'})
 
