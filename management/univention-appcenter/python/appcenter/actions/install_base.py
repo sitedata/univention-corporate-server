@@ -340,11 +340,11 @@ class InstallRemoveUpgrade(Register):
 							try:
 								call(absolute_path)
 							except Exception:  # any exception is equally indifferent
-								self.log('Custom hook script failed: {script_name}').format(script_name=absolute_path)
+								self.log('Custom hook script failed: {script_name}'.format(script_name=absolute_path))
 						else:
-							self.log('Skipping {script_name}, because it is not marked as executable.').format(script_name=absolute_path)
+							self.log('Skipping {script_name}, because it is not marked as executable.'.format(script_name=absolute_path))
 			else:
-				self.log('No Script hook directory found for this app. Its name should be {folder}').format(folder=directory)
+				self.log('No Script hook directory found for this app. Its name should be {folder}'.format(folder=directory))
 
 		def _call_install_hooks(self, app, args):
 			self._call_all_hooks(ucr_get("appcenter/hook_directories/install",
