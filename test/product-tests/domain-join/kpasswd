@@ -8,10 +8,12 @@ set newpassword [lindex $argv 2]
 spawn kpasswd "$user"
 
 expect "$user\@"
-send "$password\n";
+send "$password\r";
 
 expect "New password"
-send "$newpassword\n"
+send "$newpassword\r"
 
 expect "Verify password"
-send "$newpassword\n"
+send "$newpassword\r"
+
+expect eof

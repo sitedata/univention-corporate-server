@@ -63,26 +63,31 @@ test_user () {
 	sshpass -p "$password" ssh -o StrictHostKeyChecking=no "$username@$(hostname)" "whoami"
 }
 
-test_login_as_diff_user () {
+test_login () {
 	local user=${1:?missing user}
 	local password=${2:?missing password}
-	echo "Login as User: '$user'"
-	expect product-tests/domain-join/login "$user" "$password"
+	echo "Login as User: $user"
+	expect ~/product-tests/domain-join/login "$user" "$password"
 }
 
 test_change_password () {
 	local user=${1:?missing user}
 	local old_password=${2:?missing old password}
 	local new_password=${3:?missing new password}
-	echo "Changing password of User: '$user'"
-	expect product-tests/domain-join/kpasswd "$user" "$old_password" "$new_password" 
+	echo "Changing password of User: $user"
+	expect ~/product-tests/domain-join/kpasswd "$user" "$old_password" "$new_password" 
 }
 
-test_check_dir () {
+test_home_directory () {
 	local user=${1:?missing user}
-	local directory=${2:?missing dir}
-	echo "Checking directory '/"$directory"/"$user"/'"
-	[ -d '/"$directory"/"$user"/' ] && echo "Directory '/"$directory"/"$user"/' found"
+	echo "Checking directory /home/$user/"
+	[ -d "/home/$user/" ] && echo "Directory /home/$user/ found"
+}
+
+test_login_with_old_pw () {
+    local user=${1:?missing user}
+    local password=${2:?missing password}
+	! test_login "$user" "$password"	
 }
 
 run_tests () {
@@ -94,13 +99,14 @@ run_tests () {
 	local user_lastname=${6:?missing user lastname}
 	local user_password=${7:?missing user password}
 	local new_user_password=${8:?missing new user password}
-	local directory=${9:?missing directory}
 	
 	if $run_tests; then
 		test_univention_domain_join_cli "$dc_ip" "$admin" "$admin_password"
 		test_user "$admin" "$admin_password"
-		test_login_as_diff_user "$user" "$user_password"
-		test_check_dir "$user" "$directory"
+		test_login "$user" "$user_password"
+		test_home_directory "$user"
 		test_change_password "$user" "$user_password" "$new_user_password"
+		test_login "$user" "$new_user_password"
+	   	test_login_with_old_pw "$user" "$user_password"
 	fi
 }
