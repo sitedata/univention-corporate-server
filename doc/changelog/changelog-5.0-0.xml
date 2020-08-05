@@ -55,7 +55,7 @@
 					The API for registration of UCR modules is now unified to match the regular arguments of the handler functions (<u:bug>30127</u:bug>)
 				</simpara></listitem>
 				<listitem><simpara>
-					&ucsUCR;-Variables may define default values now (<u:bug>38938</u:bug>)
+					Default values for &ucsUCRV;s can now be defined in the files <filename class="extension">.univention-config-registry-variables</filename> (<u:bug>38938</u:bug>)
 				</simpara></listitem>
 				<listitem><simpara>
 					The performance of <command>ucr shell</command> has been improved (<u:bug>31257</u:bug>)
