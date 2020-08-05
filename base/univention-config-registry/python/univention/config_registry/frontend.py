@@ -428,7 +428,7 @@ def handler_get(args, opts=dict()):
 		yield ucr.get(args[0], '')
 
 
-def variable_info_string(key, value, variable_info, scope=None, details=_SHOW_DESCRIPTION, default=None):
+def variable_info_string(key, value, variable_info, scope=None, details=_SHOW_DESCRIPTION):
 	# type: (str, Optional[str], Any, int, int) -> str
 	"""
 	Format UCR variable key, value, description, scope, categories and default value.
@@ -438,7 +438,6 @@ def variable_info_string(key, value, variable_info, scope=None, details=_SHOW_DE
 	:param variable_info: Description object.
 	:param scope: UCS layer.
 	:param details: bit-field for detail-level.
-	:param default: UCR variable default value.
 	:returns: formatted string
 	"""
 	if value is None and not variable_info:
