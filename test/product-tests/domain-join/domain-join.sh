@@ -87,7 +87,9 @@ test_home_directory () {
 test_login_with_old_pw () {
     local user=${1:?missing user}
     local password=${2:?missing password}
-	! test_login "$user" "$password"	
+	local password_file=$(mktemp)
+	echo -n $password > $password_file
+	! kinit --password-file=$password_file $username
 }
 
 run_tests () {
