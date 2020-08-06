@@ -55,9 +55,11 @@ def main(filenames, ignore_exceptions=(), ignore_tracebacks=()):
 						lines.append(line)
 					d = Set()
 					d.occurred = 1
+					d.filenames = set()
 					tb = tracebacks.setdefault(''.join(lines[:-1]), d)
 					tb.add(lines[-1])
 					tb.occurred += 1
+					d.filenames.add(filename)
 
 	print(len(tracebacks))
 	found = False
@@ -70,7 +72,7 @@ def main(filenames, ignore_exceptions=(), ignore_tracebacks=()):
 		except StopIteration:
 			pass
 		found = True
-		print('%d times:' % (exceptions.occurred,))
+		print('%d times in %s:' % (exceptions.occurred, ', '.join(d.filenames)))
 		print('Traceback (most recent call last):')
 		print(traceback, end='')
 		for exc in exceptions:
