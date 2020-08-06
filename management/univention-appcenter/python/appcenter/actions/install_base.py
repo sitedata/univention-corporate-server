@@ -44,7 +44,7 @@ from univention.appcenter.app import App
 from univention.appcenter.actions import StoreAppAction, get_action
 from univention.appcenter.exceptions import Abort, NetworkError, AppCenterError, ParallelOperationInProgress
 from univention.appcenter.actions.register import Register
-from univention.appcenter.utils import get_locale
+from univention.appcenter.utils import get_locale, call_process2
 from univention.appcenter.ucr import ucr_get
 from univention.appcenter.settings import SettingValueError
 from univention.appcenter.packages import package_lock, LockError
@@ -158,6 +158,13 @@ class InstallRemoveUpgrade(Register):
 			else:
 				if status == 200:
 					self._write_success_event(app, context_id, args)
+					self._call_all_hooks(
+							"/var/lib/univention-appcenter/apps/"
+							"{app_id}/local/hooks/post-{action}.d/".format(
+								app_id=app.id,
+								action=action)
+					)
+
 				else:
 					self._write_fail_event(app, context_id, status, args)
 				if status != 200:
@@ -324,7 +331,10 @@ class InstallRemoveUpgrade(Register):
 	def _call_all_hooks(self, directory):
 		"""
 		iterates over all files in a directory ordered by name and executes
-		files marked as executable.
+		files marked as executable, similar to run-parts, which can be used by
+		administrators to do this step manually. Even though run-parts is part
+		of debianutils, it is not formally standartizied and could change. This
+		implementation is therefore considered to be more stable.
 		"""
 		from subprocess import call  # `call` with python3.5 should be replaced with `run`
 		from os import listdir, path, access, X_OK
@@ -345,7 +355,8 @@ class InstallRemoveUpgrade(Register):
 
 				# any exception is equally indifferent and should not influence the installation
 				try:
-					call(absolute_path)
+					(retval, output) = call_process2([absolute_path])
+					self.log("{filename}: {output}".format(filename=filename, output=output))
 				except Exception as e:
 
 					# we still want to let the user know, why the hook script failed, because scripts can
@@ -364,21 +375,6 @@ class InstallRemoveUpgrade(Register):
 						folder=directory
 					)
 				)
-
-	def _call_install_hooks(self, app, args):
-		return self._call_all_hooks(ucr_get(
-			"appcenter/hook_directories/install",
-			"/var/lib/univention-appcenter/apps/{appid}/local/hooks/post-install.d/").format(appid=app.id))
-
-	def _call_post_remove_hooks(self, app, args):
-		return self._call_all_hooks(ucr_get(
-			"appcenter/hook_directories/remove",
-			"/var/lib/univention-appcenter/apps/{appid}/local/hooks/post-remove.d/").format(appid=app.id))
-
-	def _call_upgrade_hooks(self, app, args):
-		return self._call_all_hooks(ucr_get(
-			"appcenter/hook_directories/upgrade",
-			"/var/lib/univention-appcenter/apps/{appid}/local/hooks/post-upgrade.d/").format(appid=app.id))
 
 	def _get_configure_settings(self, app, filter_action=True):
 		set_vars = {}

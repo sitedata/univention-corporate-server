@@ -152,7 +152,6 @@ class Upgrade(Upgrade, Install, DockerActionMixin):
 		self._register_app(app, args)
 		self._configure(app, args)
 		self._call_join_script(app, args)
-		self._call_upgrade_hooks(app, args)
 		self.old_app = app
 
 	def _upgrade_image(self, app, args):
@@ -189,7 +188,6 @@ class Upgrade(Upgrade, Install, DockerActionMixin):
 		self._configure(app, args)
 		self._register_app(app, args)
 		self._call_join_script(app, args)
-		self._call_upgrade_hooks(app, args)
 		if args.remove_image:
 			self.log('Trying to remove old image')
 			try:
@@ -217,7 +215,6 @@ class Upgrade(Upgrade, Install, DockerActionMixin):
 			if remove._unregister_component(self.old_app):
 				update_packages()
 			self._call_join_script(app, args)  # run again in case remove() called an installed unjoin script
-			self._call_upgrade_hooks(app, args)
 			self.old_app = app
 
 	def _revert(self, app, args):
