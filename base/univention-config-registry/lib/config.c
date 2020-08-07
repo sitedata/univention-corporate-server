@@ -54,6 +54,7 @@ static const char *SCOPES[] = {
 	"ldap",
 	"normal",
 	"custom",
+	"default",
 	NULL};
 
 static const char *LAYERS[] = {
@@ -61,6 +62,7 @@ static const char *LAYERS[] = {
 			"/etc/univention/base-schedule.conf",
 			"/etc/univention/base-ldap.conf",
 			"/etc/univention/base.conf",
+			"/etc/univention/base-defaults.conf",
 			NULL};
 
 char *univention_config_get_string(const char *key)
