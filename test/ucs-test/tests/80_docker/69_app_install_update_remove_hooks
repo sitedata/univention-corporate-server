@@ -22,7 +22,6 @@ app_name = get_app_name()  # returns an arbitrary app
 file_result = "/tmp/69_app_install_update_remove_hooks.result"
 
 # the path, where -by convention- script hooks have to be stored (app specific)
-app_path = "/var/lib/univention-appcenter/apps/{appid}".format(appid=app_name)
 hook_path = "/var/lib/univention-appcenter/apps/{appid}/local/hooks".format(
 	appid=app_name)
 
@@ -30,7 +29,7 @@ hook_path = "/var/lib/univention-appcenter/apps/{appid}/local/hooks".format(
 # filename into $result_file- appends one line & that is the test condition.
 test_script = '#!/bin/sh' \
 	'\n' '# This script prints its own name' \
-	'\n' "echo \"\'$0\'\" >> {file_result}".format(file_result=file_result)
+	'\n' 'echo "$0" >> {file_result}'.format(file_result=file_result)
 # ^ NOTE: ticks are intentional!
 
 # the setup will create all script folders for the hooks and place the
@@ -58,7 +57,6 @@ setup = '#!/bin/sh' \
 	)
 
 # ==============================================================================
-
 
 def assert_file_lines(filename, hookname):
 	"""
@@ -132,4 +130,5 @@ if __name__ == '__main__':
 		app.remove()
 		# assure, that the remove has added a new line to the file..
 		assert_file_lines(file_result, "remove")
+
 # vim: ft=python
