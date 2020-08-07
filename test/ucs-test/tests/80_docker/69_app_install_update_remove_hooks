@@ -48,6 +48,7 @@ setup = '#!/bin/sh' \
 	"\n" 'chmod +x {hook_path}/post-remove.d/01-script.sh' \
 	"\n" 'chmod +x {hook_path}/post-install.d/01-script.sh' \
 	"\n" 'chmod +x {hook_path}/post-install.d/01-script.sh' \
+	"\n" \
 	"\n" '# initialize or reset result file...' \
 	"\n" '(echo -n "#" ; date) > {file_result}' \
 	"\n" 'set +x'.format(
@@ -74,60 +75,63 @@ if __name__ == '__main__':
 	check the $result_file entry and see if it contains the last action.
 	"""
 	subprocess.check_output(setup, shell=True)
+
 	with Appcenter() as appcenter:
 
 		# ==================================================================
 		# first test: update the app
-		app = App(
+		with app as App(
 			name=app_name,
 			version='1',  # first version
 			build_package=False,
-			call_join_scripts=False
-		)
-		app.add_script(setup=setup)
-		app.set_ini_parameter(
-			DockerImage='alpine:3.6',  # initial docker image release
-			DockerScriptSetup='/setup',
-			DockerScriptInit='/sbin/init',
-		)
+			call_join_scripts=False):
 
-		app.add_to_local_appcenter()
-		appcenter.update()
-		app.install()  # install the app
-		app.verify(joined=False)
+			app.add_script(setup=setup)
+			app.set_ini_parameter(
+				DockerImage='alpine:3.6',  # initial docker image release
+				DockerScriptSetup='/setup',
+				DockerScriptInit='/sbin/init',
+			)
+
+			app.add_to_local_appcenter()
+			appcenter.update()
+			app.install()  # install the app
+			app.verify(joined=False)
 
 		# assume, that the install hook has added a line to the file_result,
 		# which contains only the current date after the setup and check
 		# that this last line contains the word `install`...
 		assert_file_lines(file_result, "install")
-		# appcenter.cleanup()
+
 		# ==================================================================
 		# second test: update the app...
-		app = App(
+		with app as App(
 			name=app_name,
 			version='2',  # next version
 			build_package=False,
-			call_join_scripts=False
-		)
-		app.add_script(setup=setup)
-		app.set_ini_parameter(
-			DockerImage='alpine:3.7',  # next image release
-			DockerScriptSetup='/setup',
-			DockerScriptInit='/sbin/init',
-		)
+			call_join_scripts=False):
 
-		app.add_to_local_appcenter()
-		appcenter.update()
-		app.upgrade()	# now upgrade the app
-		app.verify(joined=False)
+			app.add_script(setup=setup)
+			app.set_ini_parameter(
+				DockerImage='alpine:3.7',  # next image release
+				DockerScriptSetup='/setup',
+				DockerScriptInit='/sbin/init',
+			)
+
+			app.add_to_local_appcenter()
+			appcenter.update()
+			app.upgrade()	# now upgrade the app
+			app.verify(joined=False)
 
 		# assure, that the update_hook has added a new line to the file..
 		assert_file_lines(file_result, "upgrade")
 
 		# ==================================================================
 		# third test: remove the app...
-		app.uninstall()
-		app.remove()
+		with app as App(name=app_name):
+			app.uninstall()
+			app.remove()
+
 		# assure, that the remove has added a new line to the file..
 		assert_file_lines(file_result, "remove")
 
