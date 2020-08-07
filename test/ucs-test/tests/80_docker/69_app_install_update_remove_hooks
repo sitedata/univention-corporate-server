@@ -6,12 +6,14 @@
 ##   - docker.io
 
 from __future__ import print_function
-from dockertest import Appcenter, get_app_version, App, UCSTest_DockerApp_InstallationFailed, get_docker_appbox_image, get_app_name
+from dockertest import \
+	Appcenter, \
+	get_app_version, \
+	App, \
+	UCSTest_DockerApp_InstallationFailed, \
+	get_docker_appbox_image, \
+	get_app_name
 from univention.testing.utils import is_port_open
-import pytest
-import os
-import subprocess
-
 
 app_name = get_app_name()  # returns an arbitrary app
 
