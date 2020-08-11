@@ -220,7 +220,9 @@ run_setup_join () {
 	local srv rv=0
 	chown _apt /var/cache/univention-system-setup/packages/Packages
 	patch_setup_join # temp. remove me
-	/usr/lib/univention-system-setup/scripts/setup-join.sh ${1:+"$@"} || rv=$?
+	set -o pipefail
+	/usr/lib/univention-system-setup/scripts/setup-join.sh ${1:+"$@"} | tee -a /var/log/univention/setup.log || rv=$?
+	set +o pipefail
 	ucr set apache2/startsite='univention/' # Bug #31682
 	systemctl try-reload-or-restart univention-management-console-server univention-management-console-web-server apache2
 	ucr unset --forced update/available
