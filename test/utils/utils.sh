@@ -161,7 +161,7 @@ set_repository_to_testing () {
 	if is_ec2; then
 		ucr set repository/online/server=updates-test.software-univention.de
 	else
-		ucr set repository/online/server=updates-test.knut.univention.de
+		ucr set repository/online/server=apt.knut.univention.de
 	fi
 }
 
@@ -245,7 +245,7 @@ run_setup_join_on_non_master () {
 wait_until_update_server_is_resolvable () {
 	local i=0
 	local servers=""
-	is_ec2 && servers="updates.software-univention.de updates-test.software-univention.de" || server="updates.knut.univention.de updates-test.knut.univention.de"
+	is_ec2 && servers="updates.software-univention.de updates-test.software-univention.de" || server="updates.knut.univention.de apt.knut.univention.de"
 	for server in $servers; do
 		while [ $i -lt 900 ]
 		do
