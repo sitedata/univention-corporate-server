@@ -8,6 +8,35 @@ EOF;
 
 $this->includeAtTemplateBase('includes/header.php');
 ?>
+
+<script type="text/javascript">
+	//<!--
+		require(["umc/dialog", "umc/tools", "dojo/json", "dojox/html/entities", "umc/i18n!management"], function(dialog, tools, json, entities, _) {
+			setTimeout(function() { /* dependency problem umc/dialog is not yet require()d in umc/tools*/
+				var data = <?php
+$title = $this->t($this->data['dictTitle']);
+$message = $this->t($this->data['dictDescr'], $this->data['parameters']) . " (Tracking-ID: " . $this->data['error']['trackId'] . ")";
+$traceback = $this->data['showerrors'] ? $title . "\n\n" . $message . "\n\n" . $this->data['error']['exceptionMsg'] : "";
+echo json_encode(array(
+	"status" => 500,
+	"title" => $title,
+	"message" => $message,
+	"traceback" => $traceback,
+));
+				?>;
+				var info = tools.parseError(data);
+				info.title = info.title || _('HTTP Error %s', info.status);
+				tools.getErrorHandler({ force401Display: true, hideInformVendor: true, hideInformVendorViaMail: true }).displayError(info).then().always(function() {
+					setTimeout(function() {
+						window.location.href = data.location || '/univention/management/';
+					}, 1000);
+				});
+			}, 1000);
+		});
+	//-->
+</script>
+
+<noscript>
     <h2><?php echo $this->t($this->data['dictTitle']); ?></h2>
 <?php
 echo htmlspecialchars($this->t($this->data['dictDescr'], $this->data['parameters']));
@@ -21,10 +50,10 @@ if (isset($this->data['includeTemplate'])) {
         <p><?php echo $this->t('report_trackid'); ?></p>
         <div class="input-group" style="width: 1em;">
             <pre id="trackid" class="input-left"><?php echo $this->data['error']['trackId']; ?></pre>
-            <button data-clipboard-target="#trackid" id="btntrackid" class="btnaddonright">
+            <!--<button data-clipboard-target="#trackid" id="btntrackid" class="btnaddonright">
                 <img src="/<?php echo $this->data['baseurlpath'].'resources/icons/clipboard.svg'; ?>"
                      alt="Copy to clipboard" />
-            </button>
+            </button>-->
         </div>
     </div>
 <?php
@@ -67,8 +96,6 @@ if (isset($this->data['errorReportAddress'])) {
 ?>
     <h2 style="clear: both"><?php echo $this->t('howto_header'); ?></h2>
     <p><?php echo $this->t('howto_text'); ?></p>
-    <script type="text/javascript">
-        var clipboard = new Clipboard('#btntrackid');
-    </script>
+</noscript>
 <?php
 $this->includeAtTemplateBase('includes/footer.php');
