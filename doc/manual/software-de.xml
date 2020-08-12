@@ -744,7 +744,8 @@ apt-cache search fax
 
 		<para>
 		Um von dieser Eigenschaft Gebrauch zu machen können Skripte in einem
-		der folgenden Verzeichnisse abgelegt werden (erstellen Sie es, wenn nötig):
+		der folgenden Verzeichnisse abgelegt werden. Wenn ein solches Verzeichnis
+		noch nicht existiert, kann es manuell angelegt werden.
 		</para>
 
 		<programlisting language="sh">

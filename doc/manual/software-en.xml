@@ -741,7 +741,8 @@ apt-cache search fax
 
 		<para>
 		To use this feature custom scripts can be placed in one of the
-		directories listed below (create it if needed):
+		directories listed below. If such a directory does not yet exist,
+		it can be manually created:
 		</para>
 
 		<programlisting language="sh">
