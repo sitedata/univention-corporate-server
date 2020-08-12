@@ -40,6 +40,7 @@ define([
 	"dojo/string",
 	"dojo/topic",
 	"dojo/cookie",
+	"dojo/dom-class",
 	"dijit/Dialog",
 	"dijit/TitlePane",
 	"dojox/timing/_base",
@@ -51,7 +52,7 @@ define([
 	"umc/i18n/tools",
 	"umc/i18n!",
 	"dojo/colors" // mixin for dojo.Color
-], function(lang, array, _window, xhr, basexhr, Deferred, all, json, string, topic, cookie, Dialog, TitlePane, timing, styles, entities, ContainerWidget, ConfirmDialog, Text, i18nTools, _) {
+], function(lang, array, _window, xhr, basexhr, Deferred, all, json, string, topic, cookie, domClass, Dialog, TitlePane, timing, styles, entities, ContainerWidget, ConfirmDialog, Text, i18nTools, _) {
 	// in order to break circular dependencies (umc.tools needs a Widget and
 	// the Widget needs umc/tools), we define umc/dialog as an empty object and
 	// require it explicitly
@@ -2094,6 +2095,14 @@ define([
 				}
 			});
 			return difference;
+		},
+
+		toggleVisibility: function(elem, visible) {
+			var node = elem;
+			if (Object.prototype.hasOwnProperty.call(elem, 'domNode')) {
+				node = elem.domNode;
+			}
+			domClass.toggle(node, 'dijitDisplayNone', !visible);
 		}
 	});
 

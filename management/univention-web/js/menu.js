@@ -64,12 +64,12 @@ define([
 		},
 
 		open: function() {
-			domClass.toggle(baseWin.body(), 'mobileMenuActive');
+			if (domClass.contains(baseWin.body(), 'mobileMenuActive')) {
+				return;
+			}
+			domClass.add(baseWin.body(), 'mobileMenuActive');
 			var hasScrollbar = baseWin.body().scrollHeight > win.getBox().h;
 			domClass.toggle(baseWin.body(), 'hasScrollbar', hasScrollbar);
-			tools.defer(function() {
-				domClass.toggle(baseWin.body(), 'mobileMenuToggleButtonActive');
-			}, 510);
 		},
 
 		close: function() {
@@ -79,8 +79,6 @@ define([
 			domClass.remove(baseWin.body(), 'mobileMenuActive');
 			domClass.remove(baseWin.body(), 'hasScrollbar');
 			tools.defer(lang.hitch(this, function() {
-				domClass.toggle(baseWin.body(), 'mobileMenuToggleButtonActive');
-
 				this.getMenuInstance().then(function(menuInstance) {
 					menuInstance.closeOpenedSubMenus();
 				});
