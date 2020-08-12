@@ -140,10 +140,10 @@ upgrade_to_latest_test_errata () {
 	local current prev=DUMMY rc=0
 	while current="$(ucr get version/version)-$(ucr get version/patchlevel)" && [ "$current" != "$prev" ]
 	do
-		if [ -x /root/activate-errata-test-scope.sh ]
-		then
-			/root/activate-errata-test-scope.sh
-		fi
+#		if [ -x /root/activate-errata-test-scope.sh ]
+#		then
+#			/root/activate-errata-test-scope.sh
+#		fi
 		upgrade_to_latest --updateto "$current"
 		rc=$?
 		prev="$current"
@@ -420,20 +420,20 @@ install_ucs_test () {
 
 install_ucs_test_from_errata_test () {
 	wait_for_repo_server || return 1
-	bash /root/activate-errata-test-scope.sh || return 1
+	#bash /root/activate-errata-test-scope.sh || return 1
 	install_ucs_test || return 1
 }
 
 install_ucs_test_checks_from_errata_test () {
 	local rv=0
-	bash /root/activate-errata-test-scope.sh || rv=$?
+	#bash /root/activate-errata-test-scope.sh || rv=$?
 	install_with_unmaintained ucs-test-checks "$@" || rv=$?
 	return $rv
 }
 
 install_from_errata_test () {
 	local rv=0
-	bash /root/activate-errata-test-scope.sh || rv=$?
+	#bash /root/activate-errata-test-scope.sh || rv=$?
 	install_with_unmaintained "$@" || rv=$?
 	return $rv
 }
@@ -901,7 +901,7 @@ run_app_appliance_tests () {
 		done
 	done
 	# install ucs-test from errata test
-	/root/activate-errata-test-scope.sh
+	#/root/activate-errata-test-scope.sh
 	install_with_unmaintained ucs-test-appcenter ucs-test-checks || rv=$?
 	run_minimal_apptests || rv=$?
 	return $rv
