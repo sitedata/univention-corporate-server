@@ -184,7 +184,7 @@ class InstallRemoveUpgrade(Register):
 					self._write_success_event(app, context_id, args)
 					self._call_action_hooks(
 						"/var/lib/univention-appcenter/apps/"
-						"{app_id}/local/hooks/{when}-{action}.d/".format(
+						"{app_id}/local/hooks/{when}-{action}.d".format(
 							app_id=app.id,
 							action=self.get_action_name(),
 							when="post"
