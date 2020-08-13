@@ -1,3 +1,10 @@
+univention-appcenter (8.0.11-136) unstable; urgency=medium
+
+  * Bug #51790: Allow the execution of custom hooks after install, upgrade and
+    remove.
+
+ -- Max Christian Pohle <pohle@univention.de>  Sun, 30 Aug 2020 17:58:14 +0200
+
 univention-appcenter (8.0.11-135) unstable; urgency=medium
 
   * Bug #51790: Allow the execution of custom hooks after install, upgrade and
