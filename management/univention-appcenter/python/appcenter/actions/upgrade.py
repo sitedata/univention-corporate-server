@@ -90,7 +90,7 @@ class Upgrade(Install):
 		return write_event(APP_UPGRADE_FAILURE, {'name': app.name, 'version': self.old_app.version, 'error_code': str(status)}, username=self._get_username(args), context_id=context_id)
 
 	def _call_action_hooks(self, directory):
-		super()._run_parts(directory)
+		super(Upgrade, self)._run_parts(directory)
 
 	def needs_credentials(self, app):
 		needs_credentials = super(Upgrade, self).needs_credentials(app)

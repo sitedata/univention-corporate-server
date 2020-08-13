@@ -107,9 +107,12 @@ class InstallRemoveUpgrade(Register):
 		from os import path
 		if os.path.isdir(directory):
 			(retval, output) = call_process2(["run-parts", directory])
-			self.log(output)
+			# self.log(output) is unnecessary, because call_process2 logs its
+			# output, but if you are replacing call_process2 with something
+			# different, please remember to to inform the user about the output
+			# of the scripts!
 		else:
-			self.info('Script hook folder is unused: {folder}'.format(folder=directory))
+			self.log('Potential script hook folder is unused: {folder}'.format(folder=directory))
 
 	def do_it(self, args):
 		app = args.app

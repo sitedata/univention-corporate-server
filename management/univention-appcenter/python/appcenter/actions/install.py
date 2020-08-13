@@ -96,7 +96,7 @@ class Install(InstallRemoveUpgrade):
 		return args.only_master_packages
 
 	def _call_action_hooks(self, directory):
-		super()._run_parts(directory)
+		super(Install, self)._run_parts(directory)
 
 	def _do_it(self, app, args):
 		if self._install_only_master_packages(args):
