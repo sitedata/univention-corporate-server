@@ -238,44 +238,47 @@ class Instance(Base):
 
 	def _maintenance_information(self):  # type: () -> Dict[str, Any]
 		ucr.load()
-		if not ucr.is_true('license/extended_maintenance/disable_warning') and self.uu:
-			version = self.uu.current_version
-			try:
-				url = urljoin(ucr.get('repository/online/server', UcsRepoUrl.DEFAULT), '/release.json')
-				response = requests.get(url, timeout=10)
-				if not response.ok:
-					response.raise_for_status()
+		default = {'show_warning': False}
+		if ucr.is_true('license/extended_maintenance/disable_warning') or not self.uu:
+			return default
 
-				json = response.json()
-				for majors in json['releases']:
-					if majors['major'] != version.major:
+		version = self.uu.current_version
+		try:
+			url = urljoin(ucr.get('repository/online/server', UcsRepoUrl.DEFAULT), '/release.json')
+			response = requests.get(url, timeout=10)
+			if not response.ok:
+				response.raise_for_status()
+
+			json = response.json()
+			for majors in json['releases']:
+				if majors['major'] != version.major:
+					continue
+				for minors in majors["minors"]:
+					if minors['minor'] != version.minor:
 						continue
-					for minors in majors["minors"]:
-						if minors['minor'] != version.minor:
+					for patchlevel in minors["patchlevels"]:
+						if patchlevel['patchlevel'] != version.patchlevel:
 							continue
-						for patchlevel in minors["patchlevels"]:
-							if patchlevel['patchlevel'] != version.patchlevel:
-								continue
 
-							# FIXME: Adapt to format implemented by repo-ng
-							_maintained_status = patchlevel.get("status", "maintained")
-							maintenance_extended = _maintained_status == 'extended'
-							show_warning = maintenance_extended or not _maintained_status
+						# FIXME: Adapt to format implemented by repo-ng
+						_maintained_status = patchlevel.get("status", "maintained")
+						maintenance_extended = _maintained_status == 'extended'
+						show_warning = maintenance_extended or not _maintained_status
 
-							return {
-								'ucs_version': str(version),
-								'show_warning': show_warning,
-								'maintenance_extended': maintenance_extended,
-								'base_dn': ucr.get('license/base')
-							}
-						break
+						return {
+							'ucs_version': str(version),
+							'show_warning': show_warning,
+							'maintenance_extended': maintenance_extended,
+							'base_dn': ucr.get('license/base')
+						}
 					break
-			except requests.exceptions.RequestException as exc:
-				MODULE.error("Querying maintenance information failed: %s" % (exc,))
-			except Exception as exc:
-				MODULE.error('The JSON format is malformed: %s' % (exc,))
+				break
+		except requests.exceptions.RequestException as exc:
+			MODULE.error("Querying maintenance information failed: %s" % (exc,))
+		except Exception as exc:
+			MODULE.error('The JSON format is malformed: %s' % (exc,))
 
-		return {'show_warning': False}
+		return default
 
 	@simple_response
 	def poll(self):  # type: () -> bool
