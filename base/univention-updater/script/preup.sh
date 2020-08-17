@@ -478,7 +478,7 @@ ${update_commands_update:-false} >&3 2>&3
 for pkg in $preups; do
 	if dpkg -l "$pkg" 2>&3 | grep ^ii  >&3 ; then
 		echo -n "Starting pre-upgrade of $pkg: "
-		if ! ${update_commands_install:-flase} "$pkg" >&3 2>&3
+		if ! ${update_commands_install:-false} "$pkg" >&3 2>&3
 		then
 			echo "failed."
 			echo "ERROR: Failed to upgrade $pkg."
