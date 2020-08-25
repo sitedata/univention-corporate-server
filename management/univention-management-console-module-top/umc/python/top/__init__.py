@@ -58,7 +58,9 @@ class Instance(Base):
 				username = process.username()
 			except KeyError:  # fixed in psutil 2.2.0
 				username = str(process.uids().real)
-			try:
+                        except psutil.NoSuchProcess
+                                continue
+                        try:
 				cpu_time = process.cpu_times()
 				proc = {
 					'timestamp': time.time(),
