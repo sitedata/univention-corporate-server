@@ -1,3 +1,77 @@
+ucs-test (9.0.4-47) unstable; urgency=low
+
+  * Improved script hook test
+
+ -- Max Christian Pohle <pohle@univention.de>  Fri, 28 Aug 2020 12:11:56 +0200
+
+ucs-test (9.0.4-46) unstable; urgency=medium
+
+  * Bug #50300: fix python file encoding
+
+ -- Florian Best <best@univention.de>  Thu, 20 Aug 2020 08:03:04 +0200
+
+ucs-test (9.0.4-45) unstable; urgency=medium
+
+  * Bug #50300: ignore more tracebacks
+
+ -- Florian Best <best@univention.de>  Tue, 11 Aug 2020 22:03:23 +0200
+
+ucs-test (9.0.4-41) unstable; urgency=medium
+
+  * Bug #44710: add 66_udm-
+    computers/58_removal_of_leftover_ptr_record_with_multiple_ip_address
+    es
+
+ -- Florian Best <best@univention.de>  Tue, 11 Aug 2020 18:51:05 +0200
+
+ucs-test (9.0.4-40) unstable; urgency=medium
+
+  * Bug #50300: fix typo
+
+ -- Florian Best <best@univention.de>  Mon, 10 Aug 2020 15:38:14 +0200
+
+ucs-test (9.0.4-39) unstable; urgency=medium
+
+  * Bug #50300: +x flag
+
+ -- Florian Best <best@univention.de>  Mon, 10 Aug 2020 11:02:50 +0200
+
+ucs-test (9.0.4-38) unstable; urgency=medium
+
+  * Bug #50300: improove 99_end
+
+ -- Florian Best <best@univention.de>  Mon, 10 Aug 2020 10:58:35 +0200
+
+ucs-test (9.0.4-37) unstable; urgency=medium
+
+  * Bug #1234: Wait a litte bit longer for 96rename* tests
+
+ -- Julia Bremer <bremer@univention.de>  Sat, 08 Aug 2020 19:33:14 +0200
+
+ucs-test (9.0.4-35) unstable; urgency=medium
+
+  * Bug #51790: Fix 69_app_install_update_remove_hooks error on upgrade
+
+ -- Julia Bremer <bremer@univention.de>  Sat, 08 Aug 2020 19:03:51 +0200
+
+ucs-test (9.0.4-34) unstable; urgency=medium
+
+  * Bug #51790: Test case for new appcenter hooks
+
+ -- Julia Bremer <bremer@univention.de>  Fri, 07 Aug 2020 22:14:44 +0200
+
+ucs-test (9.0.4-33) unstable; urgency=medium
+
+  * Bug #50300: grep for tracebacks in /var/log/univention
+
+ -- Florian Best <best@univention.de>  Thu, 06 Aug 2020 13:14:30 +0200
+
+ucs-test (9.0.4-31) unstable; urgency=medium
+
+  * Bug #1234: added "retry" to 20_appcenter/20_can_apps_be_installed
+
+ -- Felix Botner <botner@univention.de>  Thu, 06 Aug 2020 10:06:55 +0200
+
 ucs-test (9.0.4-30) unstable; urgency=medium
 
   * Bug #51729: Test ucr variable umc/max/file_descriptors
