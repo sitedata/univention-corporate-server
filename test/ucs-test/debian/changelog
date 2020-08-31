@@ -1,8 +1,8 @@
-ucs-test (9.0.4-50) unstable; urgency=low
+ucs-test (9.0.4-51) unstable; urgency=low
 
   * Improved script hook test
 
- -- Max Christian Pohle <pohle@univention.de>  Sun, 30 Aug 2020 17:58:46 +0200
+ -- Max Christian Pohle <pohle@univention.de>  Mon, 31 Aug 2020 18:22:51 +0200
 
 ucs-test (9.0.4-49) unstable; urgency=medium
 

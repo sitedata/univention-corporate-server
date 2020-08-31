@@ -9,11 +9,37 @@ import os
 import sys
 import stat
 
-from dockertest import Appcenter, App, get_app_name
+from dockertest import (
+	Appcenter,
+	App,
+	get_app_name,
+	UCSTest_Docker_Exception,
+	tiny_app
+)
+
+class AssertionFailed(Exception):
+	pass
+
 
 actions = ["install", "upgrade", "remove"]
 # a log file to store the results (line based)...
 file_result = "/tmp/69_app_install_update_remove_hooks.result"
+# the path, where -by convention- script hooks have to be stored (app specific)
+path_hooks = "/var/lib/univention-appcenter/apps/{appid}/local/hooks"
+
+
+def get_code_position(color_start="\033[0;31m", color_stop="\033[0;0m"):
+	# not every python version has _getframe. We will only return a separator,
+	# if we cannot determine the position. It is then up to the developer to
+	# count the number of calls to find the position.
+	if hasattr(sys, '_getframe'):
+		return((color_start + "# %-*s" + color_stop) % (
+			78, sys._getframe(1).f_code.co_filename + ":"
+			+ str(sys._getframe(1).f_lineno) + ' ['
+			+ sys._getframe(1).f_code.co_name + ']')).replace(
+			'  ', '..')
+	else:
+		return color_start + ("%80s" % '').replace(' ', '=') + color_stop
 
 
 def setup(app_name):
@@ -23,9 +49,10 @@ def setup(app_name):
 	append its own name to `file_result` when executed.
 	"""
 
-	# the path, where -by convention- script hooks have to be stored (app specific)
-	hook_path = "/var/lib/univention-appcenter/apps/{appid}/local/hooks".format(
-		appid=app_name)
+
+	# try to create an empty result file...
+	with open(file_result, "w") as f:
+		f.close()
 
 	# the same script will be placed in all script hook folders, always named
 	# after the action it is for.  It prints its filename into $result_file-
@@ -39,7 +66,7 @@ def setup(app_name):
 	for action in actions:
 
 		script_hook_path = '{hook_path}/post-{action}.d'.format(
-			hook_path=hook_path,
+			hook_path=path_hooks.format(appid=app_name),
 			action=action
 		)
 
@@ -75,49 +102,38 @@ def setup(app_name):
 
 
 def app_install(appcenter, app_name):
-	# we have chosen alpine as DockerImage, because it is relatively small
-	app = App(
-		name=app_name,
-		version='1',  # first version
-		build_package=False,
-		call_join_scripts=False)
+	print(get_code_position())
 
-	app.set_ini_parameter(
-		DockerImage='alpine:3.6',  # initial docker image release
-		DockerScriptSetup='/setup',
-		DockerScriptInit='/sbin/init',
-	)
+	app = tiny_app(app_name, '3.6')
+	app.set_ini_parameter(DockerImage='docker-test.software-univention.de/alpine:3.6')
 
 	app.add_to_local_appcenter()
 	appcenter.update()
+
 	app.install()  # install the app
 	app.verify(joined=False)
+	return app
 
 
 def app_upgrade(appcenter, app_name):
-	app = App(
-		name=app_name,
-		version='2',  # next version
-		build_package=False,
-		call_join_scripts=False)
+	print(get_code_position())
 
-	app.set_ini_parameter(
-		DockerImage='alpine:3.7',  # next image release
-		DockerScriptSetup='/setup',
-		DockerScriptInit='/sbin/init',
-	)
+	app = tiny_app(app_name, '3.7')
+	app.set_ini_parameter(DockerImage='docker-test.software-univention.de/alpine:3.7')
 
 	app.add_to_local_appcenter()
 	appcenter.update()
+
 	app.upgrade()  # now upgrade the app
 	app.verify(joined=False)
+	return app
 
 
-def app_remove(appcenter, app_name):
-	app = App(name=app_name)
+def app_remove(app):
+	print(get_code_position())
+
 	app.uninstall()
 	app.remove()
-
 
 def verify_test_results_and_exit():
 	"""
@@ -125,22 +141,18 @@ def verify_test_results_and_exit():
 	the names of all actions (install/upgrade/remove).
 	"""
 
-	try:
-		with open(file_result, 'r') as f:
+	with open(file_result, 'r') as f:
 
-			# print the whole file to allow easier debugging
-			print(f.read())
+		# print the whole file to allow easier debugging
+		print(f.read())
 
-			# now check if all actions were executed and abort otherwise...
-			for action in actions:
-				assert(action in f)
+		# now check if all actions were executed and abort otherwise...
+		for action in actions:
+			if not (action in f.read()):
+				raise(AssertionFailed(
+					"Expected to find '%s' in file '%s',"
+					" but it was not there." % (action, file_result)), 2)
 
-			raise(SystemExit, 0)
-
-	except Exception:
-		print("Test FAILED! File not found: {filename}".format(
-			filename=file_result))
-		raise(SystemExit, 2)
 
 
 if __name__ == '__main__':
@@ -151,16 +163,15 @@ if __name__ == '__main__':
 	"""
 
 	app_name = get_app_name()  # returns an arbitrary app
+
 	setup(app_name)
 
-	try:
-		with Appcenter() as appcenter:
-			app_install(appcenter, app_name)
-			app_upgrade(appcenter, app_name)
-			app_remove(appcenter, app_name)
-	except Exception as e:
-		print("Problem with this test: {error}".format(error=e))
+	with Appcenter() as appcenter:
+		app = app_install(appcenter, app_name)
+		app = app_upgrade(appcenter, app_name)
+		app_remove(app)
 
 	verify_test_results_and_exit()
+
 
 # vim: ft=python
