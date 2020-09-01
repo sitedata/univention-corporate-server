@@ -27,17 +27,35 @@ file_result = "/tmp/69_app_install_update_remove_hooks.result"
 # the path, where -by convention- script hooks have to be stored (app specific)
 path_hooks = "/var/lib/univention-appcenter/apps/{appid}/local/hooks"
 
+color_highlight = "\033[0;31m"
+color_reset = "\033[0;0m"
 
-def get_code_position(color_start="\033[0;31m", color_stop="\033[0;0m"):
-	# not every python version has _getframe. We will only return a separator,
-	# if we cannot determine the position. It is then up to the developer to
-	# count the number of calls to find the position.
+
+def get_code_position(depth=1, line_length=80, fill_char='.', prefix="# ", color_start="", color_stop=""):
+	"""
+	The function draws a fixed length line (80 columns) and displays the
+	position in the code from where it is called. The rest of the line
+	is filled with dots.
+
+	@param depth: is usually `1` if this function is called directly, but if
+	a wrapper function calls this function it would become `2`. It basically
+	says how far away the code position is on the call stack.
+	@param line_length: the output will have fixed length. @see: fill_char
+	@param fill_char: fills up the remaining line with this character
+	@param prefix: prepend the output line with this string
+	@param color_start: Could be "\033[0;31m" for red or \033[0;32m for green
+	@param color_stop: should reset the color to default, usually "\033[0;0m"
+	"""
+
 	if hasattr(sys, '_getframe'):
-		return((color_start + "# %-*s" + color_stop) % (
-			78, sys._getframe(1).f_code.co_filename + ":"
-			+ str(sys._getframe(1).f_lineno) + ' ['
-			+ sys._getframe(1).f_code.co_name + ']')).replace(
-			'  ', '..')
+		# not every python version has a _getframe function. We will only
+		# return a separator, if we cannot determine the position.
+		return((color_start + prefix + "%-*s" + color_stop) % (
+			line_length - len(prefix),
+			sys._getframe(depth).f_code.co_filename + ":"
+			+ str(sys._getframe(depth).f_lineno) + ' ['
+			+ sys._getframe(depth).f_code.co_name + ']')).replace(
+			'  ', fill_char + fill_char)
 	else:
 		return color_start + ("%80s" % '').replace(' ', '=') + color_stop
 
@@ -48,7 +66,6 @@ def setup(app_name):
 	each of them with the filename being the action name. The script will
 	append its own name to `file_result` when executed.
 	"""
-
 
 	# try to create an empty result file...
 	with open(file_result, "w") as f:
@@ -102,7 +119,7 @@ def setup(app_name):
 
 
 def app_install(appcenter, app_name):
-	print(get_code_position())
+	print(get_code_position(color_start=color_highlight, color_stop=color_reset))
 
 	app = tiny_app(app_name, '3.6')
 	app.set_ini_parameter(DockerImage='docker-test.software-univention.de/alpine:3.6')
@@ -116,7 +133,7 @@ def app_install(appcenter, app_name):
 
 
 def app_upgrade(appcenter, app_name):
-	print(get_code_position())
+	print(get_code_position(color_start=color_highlight, color_stop=color_reset))
 
 	app = tiny_app(app_name, '3.7')
 	app.set_ini_parameter(DockerImage='docker-test.software-univention.de/alpine:3.7')
@@ -130,7 +147,7 @@ def app_upgrade(appcenter, app_name):
 
 
 def app_remove(app):
-	print(get_code_position())
+	print(get_code_position(color_start=color_highlight, color_stop=color_reset))
 
 	app.uninstall()
 	app.remove()
@@ -150,7 +167,6 @@ def verify_test_results_and_exit():
 				raise(AssertionFailed(
 					"Expected to find '%s' in file '%s',"
 					" but it was not there." % (action, file_result)), 2)
-
 
 
 if __name__ == '__main__':
