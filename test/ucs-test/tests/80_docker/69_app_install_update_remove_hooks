@@ -143,11 +143,9 @@ def verify_test_results_and_exit():
 
 	with open(file_result, 'r') as f:
 
-		# print the whole file to allow easier debugging
-		print(f.read())
-
 		# now check if all actions were executed and abort otherwise...
 		for action in actions:
+			f.seek(0)  # rewind before every new search
 			if not (action in f.read()):
 				raise(AssertionFailed(
 					"Expected to find '%s' in file '%s',"
