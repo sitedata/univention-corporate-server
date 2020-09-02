@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Univention Management Console module:
@@ -146,7 +146,7 @@ class Instance(Base):
 			# Is it possible that we don't have unicode here?
 			try:
 				value.decode('utf-8')
-			except:
+			except BaseException:
 				assert False, 'no unicode'
 		return '%r' % (value,)
 

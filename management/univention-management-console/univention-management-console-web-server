@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Univention Management Console
@@ -79,11 +79,12 @@ from saml2.sigver import MissingKey, SignatureError
 from univention.lib.i18n import NullTranslation
 
 try:
-	from html import unescape
+	from html import escape, unescape
 except ImportError:  # Python 2
 	import HTMLParser
 	html_parser = HTMLParser.HTMLParser()
 	unescape = html_parser.unescape
+	from cgi import escape
 
 _ = NullTranslation('univention-management-console-frontend').translate
 
@@ -452,7 +453,7 @@ def default_error_page(status, message, traceback, version, result=None):
 	page = default_error_page_json(status, message, traceback, version, result)
 	if 'X-Iframe-Response' in cherrypy.request.headers:
 		cherrypy.response.headers['Content-Type'] = 'text/html'
-		return '<html><body><textarea>%s</textarea></body></html>' % (cherrypy._cperror._escape(page),)
+		return '<html><body><textarea>%s</textarea></body></html>' % (escape(page, False),)
 	return page
 
 
@@ -460,7 +461,7 @@ def default_error_page_html(status, message, traceback, version, result=None):
 	content = default_error_page_json(status, message, traceback, version, result)
 	try:
 		with open('/usr/share/univention-management-console-frontend/error.html', 'r') as fd:
-			content = fd.read().replace('%ERROR%', json.dumps(cherrypy._cperror._escape(content, True)))
+			content = fd.read().replace('%ERROR%', json.dumps(escape(content, True)))
 		cherrypy.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
 	except (OSError, IOError):
 		pass
@@ -1358,7 +1359,7 @@ class SAML(Ressource):
 			location = urlparse(cherrypy.request.query.get('location', ''))
 			if location.path.startswith('//'):
 				location = urlparse('')
-			location = urlunsplit((None, None, location.path, location.query, location.fragment))
+			location = urlunsplit(('', '', location.path, location.query, location.fragment))
 			self.relay_state[relay_state] = {
 				'uri': cherrypy.request.uri,
 				'referer': location,
@@ -1524,11 +1525,13 @@ class UMC_HTTP_Daemon(DaemonRunner):
 		self.daemon_context.files_preserve = [debug_fd]
 
 	def _open_streams_from_app_stream_paths(self, app):
+		# Workaround for Python 3 Problem:
+		# python-daemon does `open('/dev/null', 'w+t', buffering=0)`
+		# which causes `ValueError: can't have unbuffered text I/O`
 		if six.PY3:
-			if not self.options.daemon_mode:
-				self.daemon_context.stdin = open(app.stdin_path, 'r')
-				self.daemon_context.stdout = open(app.stdout_path, 'w')
-				self.daemon_context.stderr = open(app.stderr_path, 'w')
+			self.daemon_context.stdin = open(app.stdin_path, 'r') if app.stdin_path != '/dev/stdin' else sys.stdin
+			self.daemon_context.stdout = open(app.stdout_path, 'w') if app.stdout_path != '/dev/stdout' else sys.stdout
+			self.daemon_context.stderr = open(app.stderr_path, 'w') if app.stderr_path != '/dev/stderr' else sys.stderr
 			return
 		return super(UMC_HTTP_Daemon, self)._open_streams_from_app_stream_paths(app)
 

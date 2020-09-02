@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Univention Management Console
@@ -263,7 +263,7 @@ class Base(signals.Provider, Translation):
 		except (KeyboardInterrupt, SystemExit):
 			self.finished(request.id, None, self._('The UMC service is currently shutting down or restarting. Please retry soon.'), status=503)
 			raise
-		except:
+		except BaseException:
 			self.__error_handling(request, method, *sys.exc_info())
 
 	def _parse_accept_language(self, request):
@@ -271,7 +271,7 @@ class Base(signals.Provider, Translation):
 		if request.headers.get('X-Requested-With'.title(), '').lower() != 'XMLHTTPRequest'.lower():
 			return  # don't change the language if Accept-Language header contains the value of the browser and not those we set in Javascript
 
-		accepted_locales = re.split('\s*,\s*', request.headers.get('Accept-Language', ''))
+		accepted_locales = re.split(r'\s*,\s*', request.headers.get('Accept-Language', ''))
 		if accepted_locales:
 			self.update_language(l.replace('-', '_') for l in accepted_locales)
 
@@ -280,7 +280,7 @@ class Base(signals.Provider, Translation):
 			status = 405 if request.http_method in (u'GET', u'HEAD') else 501
 			raise UMC_Error(self._('The requested HTTP method is not allowed on this resource.'), status=status, headers={'Allow': 'POST'})
 
-		if getattr(function, 'xsrf_protection', True) and request.cookies.get('UMCSessionId') != request.headers.get('X-Xsrf-Protection'.title()):
+		if getattr(function, 'xsrf_protection', True) and 'UMCSessionId' in request.cookies and request.cookies.get('UMCSessionId') != request.headers.get('X-Xsrf-Protection'.title()):
 			raise UMC_Error(self._('Cross Site Request Forgery attack detected. Please provide the "UMCSessionId" cookie value as HTTP request header "X-Xsrf-Protection".'), status=403)
 
 		if getattr(function, 'referer_protection', True) and request.headers.get('Referer') and not urlparse(request.headers['Referer']).path.startswith('/univention/'):
@@ -290,7 +290,7 @@ class Base(signals.Provider, Translation):
 		content_type = request.headers.get('Content-Type', '')
 		allowed_content_types = ('application/json', 'application/x-www-form-urlencoded', 'multipart/form-data')
 
-		if content_type and not re.match('^(%s)($|\s*;)' % '|'.join(re.escape(x) for x in allowed_content_types), content_type):
+		if content_type and not re.match(r'^(%s)($|\s*;)' % '|'.join(re.escape(x) for x in allowed_content_types), content_type):
 			raise UMC_Error(self._('The requested Content-Type is not acceptable. Please use one of %s.' % (', '.join(allowed_content_types))), status=406)
 
 	def thread_finished_callback(self, thread, result, request):
@@ -353,7 +353,7 @@ class Base(signals.Provider, Translation):
 		try:
 			try:
 				self.error_handling(etype, exc, etraceback)
-			except:
+			except BaseException:
 				raise
 			else:
 				six.reraise(etype, exc, etraceback)
@@ -370,7 +370,7 @@ class Base(signals.Provider, Translation):
 				'command': method,
 				'traceback': exc.traceback,
 			}
-		except:
+		except BaseException:
 			status = MODULE_ERR_COMMAND_FAILED
 			if etraceback is None:  # Bug #47114: thread.exc_info doesn't contain a traceback object anymore
 				tb_str = ''.join(trace + traceback.format_exception_only(*sys.exc_info()[:2]))
@@ -421,7 +421,7 @@ class Base(signals.Provider, Translation):
 				except ldap.INVALID_CREDENTIALS:  # workaround for Bug #44382: the password might be a SAML message, try to authenticate via SAML
 					etype, exc, etraceback = sys.exc_info()
 					CORE.error('LDAP authentication for %r failed: %s' % (self._user_dn, exc))
-					if self._password < 25:
+					if len(self._password) < 25:
 						raise
 					CORE.warn('Trying to authenticate via SAML.')
 					try:

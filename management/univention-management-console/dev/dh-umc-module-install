@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Univention Management Console
@@ -39,7 +39,7 @@ from __future__ import print_function
 import os
 import sys
 import subprocess
-from optparse import OptionParser
+from argparse import ArgumentParser
 from xml.sax.saxutils import escape
 
 import univention.debhelper as dh_ucs
@@ -47,6 +47,10 @@ import univention.translationhelper.umc as dh_umc
 
 
 class Module(object):
+
+	@property
+	def core(self):
+		return self.module.module_name == 'umc-core'
 
 	def __init__(self, module):
 		self.module = module
@@ -69,12 +73,12 @@ class Module(object):
 			print('I: no module definition file', file=sys.stderr)
 			return
 		target = os.path.join(self.destdir, 'usr/share/univention-management-console/modules')
-		dh_ucs.doIt('install', '-d', target)
-		dh_ucs.doIt('install', '-m', '644', self.module.xml_definition, target)
 		destination = os.path.join(target, os.path.basename(self.module.xml_definition))
-		if os.path.exists(destination):
-			# add paackage version to installed XML file
-			version = subprocess.check_output('dpkg-parsechangelog | sed -ne "s/^Version: //p"', shell=True).strip().decode('ASCII', 'replace')
+		if not self.core:
+			dh_ucs.doIt('install', '-d', target)
+			dh_ucs.doIt('install', '-p', '-m', '644', self.module.xml_definition, target)
+			# add package version to installed XML file
+			version = subprocess.check_output(['dpkg-parsechangelog', '-S', 'Version']).strip().decode('ASCII', 'replace')
 			with open(destination, 'r') as fd:
 				content = fd.read().replace('</module>', '\t<version>%s</version>\n\t</module>' % (escape(version),))
 			with open(destination, 'w') as fd:
@@ -84,7 +88,7 @@ class Module(object):
 		target_i18n = os.path.join(self.destdir, 'usr/share/univention-management-console/i18n/%%s/%(Module)s.mo' % self.module)
 		for lang in self.languages:
 			mo_file = os.path.join(os.path.dirname(self.module.xml_definition), '%s.mo' % lang)
-			dh_ucs.doIt('install', '-m', '644', '-D', mo_file, target_i18n % (lang,))
+			dh_ucs.doIt('install', '-p', '-m', '644', '-D', mo_file, target_i18n % (lang,))
 
 	def install_categories(self):
 		if not self.module.xml_categories:
@@ -93,7 +97,7 @@ class Module(object):
 
 		target = os.path.join(self.destdir, 'usr/share/univention-management-console/categories')
 		dh_ucs.doIt('install', '-d', target)
-		dh_ucs.doIt('install', '-m', '644', self.module.xml_categories, target)
+		dh_ucs.doIt('install', '-p', '-m', '644', self.module.xml_categories, target)
 
 	def install_python(self):
 		python_files = list(self.module.python_files)
@@ -108,7 +112,7 @@ class Module(object):
 				target_dir = os.path.dirname(target_file)
 				if not os.path.exists(target_dir):
 					dh_ucs.doIt('install', '-d', target_dir)
-				dh_ucs.doIt('install', '-m', '644', src_file, target_file)
+				dh_ucs.doIt('install', '-p', '-m', '644', src_file, target_file)
 
 		# copy translation files (python)
 		target_i18n = os.path.join(self.destdir, 'usr/share/locale/%s/LC_MESSAGES/')
@@ -119,7 +123,7 @@ class Module(object):
 				continue
 			destdir_i18n = target_i18n % (lang,)
 			dh_ucs.doIt('install', '-d', destdir_i18n)
-			dh_ucs.doIt('install', '-m', '644', mo_file, os.path.join(destdir_i18n, '%(package)s.mo' % self.module))
+			dh_ucs.doIt('install', '-p', '-m', '644', mo_file, os.path.join(destdir_i18n, '%(package)s.mo' % self.module))
 
 	def install_javascript(self):
 		target = 'usr/share/univention-management-console-frontend/js/umc/modules/'
@@ -134,7 +138,7 @@ class Module(object):
 			target_dir = os.path.dirname(target_file)
 			if not os.path.exists(target_dir):
 				dh_ucs.doIt('install', '-d', target_dir)
-			dh_ucs.doIt('install', '-m', '644', src_file, target_file)
+			dh_ucs.doIt('install', '-p', '-m', '644', src_file, target_file)
 
 		# copy translation files (javascript)
 		target_i18n = os.path.join(self.destdir, 'usr/share/univention-management-console-frontend/js/umc/modules/i18n/%%s' % self.module)
@@ -145,12 +149,12 @@ class Module(object):
 				continue
 			destdir_i18n = target_i18n % (lang,)
 			dh_ucs.doIt('install', '-d', destdir_i18n)
-			dh_ucs.doIt('install', '-m', '644', json_file, os.path.join(destdir_i18n, '%(Module)s.json' % self.module))
+			dh_ucs.doIt('install', '-p', '-m', '644', json_file, os.path.join(destdir_i18n, '%(Module)s.json' % self.module))
 
 	def install_html_css(self):
 		for src_file in list(self.module.html_files) + list(self.module.css_files):
 			target = os.path.join(self.destdir, 'usr/share/univention-management-console-frontend/js/umc/modules/%s' % (src_file[len(self.module.js_path):]))
-			dh_ucs.doIt('install', '-m', '644', src_file, target)
+			dh_ucs.doIt('install', '-p', '-m', '644', src_file, target)
 
 	def install_icons(self):
 		if self.module.icons is None:
@@ -166,7 +170,7 @@ class Module(object):
 			if not os.path.exists(dest):
 				dh_ucs.doIt('install', '-d', dest)
 			for icon in files:
-				dh_ucs.doIt('install', '-t', dest, '-m', '644', os.path.join(dirname, icon))
+				dh_ucs.doIt('install', '-p', '-t', dest, '-m', '644', os.path.join(dirname, icon))
 
 	def install_joinscript(self):
 		join_script_base = '%s.inst' % (self.module.package,)
@@ -176,7 +180,7 @@ class Module(object):
 		join_script = join_scripts[0]
 		join_dest = os.path.join(self.destdir, 'usr/lib/univention-install')
 		dh_ucs.doIt('install', '-d', join_dest)
-		dh_ucs.doIt('install', '-t', join_dest, '-m', '755', join_script)
+		dh_ucs.doIt('install', '-p', '-t', join_dest, '-m', '755', join_script)
 		return join_script
 
 	def install_deb_scripts(self, join_script):
@@ -199,12 +203,12 @@ umc_frontend_new_hash
 
 
 def main():
-	parser = OptionParser(usage='usage: %prog [--core]')
-	parser.add_option('-c', '--core', action='store_true', dest='core', help='do not require python, javascript, module-name and XML definition to be set')
+	parser = ArgumentParser()
+	parser.add_argument('-c', '--core', action='store_true', help='do not require python, javascript, module-name and XML definition to be set')
 
-	options, args = parser.parse_args()
+	args = parser.parse_args()
 	for package in dh_ucs.binary_packages():
-		for module in dh_umc.read_modules(package, options.core):
+		for module in dh_umc.read_modules(package, args.core):
 			Module(module).dh_module_install()
 
 

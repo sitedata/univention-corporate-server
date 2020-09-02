@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Univention Management Console
@@ -105,7 +105,7 @@ def sanitize(*args, **kwargs):
 					return []
 				try:
 					return value.split('/')
-				except:
+				except BaseException:
 					self.raise_validation_error('Split failed')
 
 	Before::
@@ -475,7 +475,8 @@ class RequestOptionsIterator(object):
 
 
 def arginspect(function):
-	argspec = inspect.getargspec(function)
+	getfullargspec = getattr(inspect, 'getfullargspec', inspect.getargspec)
+	argspec = getfullargspec(function)
 	if hasattr(function, '_original_argument_names'):
 		arguments = function._original_argument_names
 	else:

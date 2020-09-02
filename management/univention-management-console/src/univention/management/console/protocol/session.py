@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Univention Management Console
@@ -43,6 +43,7 @@ import traceback
 import gzip
 import re
 import errno
+import pipes
 
 import six
 import ldap.filter
@@ -100,7 +101,7 @@ class ModuleProcess(Client):
 			self.__locale = None
 		Client.__init__(self, unix=socket, ssl=False)
 		self.signal_connect('response', self._response)
-		CORE.process('running: %s' % args)
+		CORE.process('running: %s' % ' '.join(pipes.quote(x) for x in args))
 		self.__process = popen.RunIt(args, stdout=False)
 		self.__process.signal_connect('killed', self._died)
 		self.__pid = self.__process.start()
@@ -795,7 +796,7 @@ class Processor(ProcessorBase):
 		meta_data.update([(i, ucr.get(i)) for i in self.META_UCR_VARS])
 		return meta_data
 
-	CHANGELOG_VERSION = re.compile('^[^(]*\(([^)]*)\).*')
+	CHANGELOG_VERSION = re.compile(r'^[^(]*\(([^)]*)\).*')
 
 	def handle_request_get_info(self, request):
 		ucr.load()

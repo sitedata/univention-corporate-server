@@ -7,20 +7,22 @@ Build-Depends:
  dh-python,
  python-polib,
  python2.7-dev,
+ python3-polib,
+ python3-dev,
  univention-config-dev,
- univention-ucs-translation-template,
+ univention-l10n-tools,
 Standards-Version: 3.7.2
 
 Package: univention-management-console
 Architecture: all
 Depends:
  python-univention-management-console (= ${source:Version}),
+ python3-univention-management-console (= ${source:Version}),
  univention-management-console-module-appcenter,
  univention-management-console-module-apps,
  univention-management-console-module-diagnostic,
  univention-management-console-module-join,
  univention-management-console-module-lib,
- univention-management-console-module-mrtg,
  univention-management-console-module-passwordchange,
  univention-management-console-module-reboot,
  univention-management-console-module-services,
@@ -53,6 +55,9 @@ Depends:
  python-daemon,
  python-univention-lib (>= 1.0.25-1),
  python-univention-management-console (= ${source:Version}),
+ python3-daemon,
+ python3-univention-lib,
+ python3-univention-management-console (= ${source:Version}),
  shell-univention-lib (>= 1.0.10-1),
  univention-base-files,
  univention-directory-manager-tools (>> 7.0.147),
@@ -138,7 +143,9 @@ Depends:
  imagemagick | inkscape,
  python-polib,
  python-univention-config-registry,
- univention-ucs-translation-template (>> 6.0.0-6),
+ python3-polib,
+ python3-univention-config-registry,
+ univention-l10n-tools (>> 6.0.0-6),
  ${misc:Depends},
  ${python:Depends},
 Description: UCS Management Console - development files
@@ -187,14 +194,20 @@ Depends:
  python-pysaml2,
  python-six,
  python-univention-management-console (= ${source:Version}),
+ python3-cherrypy3,
+ python3-daemon,
  python3-defusedxml,
+ python3-pysaml2,
  python3-six,
+ python3-univention-management-console (= ${source:Version}),
  shell-univention-lib,
  univention-base-files,
  univention-management-console-frontend,
  univention-management-console-server,
  univention-saml-schema,
  ${misc:Depends},
+Breaks:
+ univention-saml (<< 7.0.0-4),
 Description: UCS Management Console - Web server
  UCS Management Console is a web based program to manage computers.
  It has an extensible architecture, using modules to implement

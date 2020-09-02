@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Univention Management Console
@@ -31,7 +31,7 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <https://www.gnu.org/licenses/>.
 
-"""
+r"""
 UMC ACL implementation
 ======================
 
@@ -382,26 +382,25 @@ class LDAP_ACLs(ACLs):
 		try:
 			userdn = self.lo.searchDn(filter_format('(&(objectClass=person)(uid=%s))', [self.username]), unique=True)[0]
 			policy = self._get_policy_for_dn(userdn)
-		except (udm_errors.base, ldap.LDAPError, IndexError):
-			ACL.warn('Error reading credentials from LDAP: %s' % (traceback.format_exc(),))
+		except (udm_errors.base, ldap.LDAPError, IndexError) as exc:
+			if not isinstance(exc, IndexError):
+				ACL.warn('Error reading credentials from LDAP for user %s: %s' % (self.username, traceback.format_exc(),))
 			# read ACLs from file
 			self._read_from_file(self.username)
 			return
 
 		if policy and 'umcPolicyGrantedOperationSet' in policy:
 			for value in policy['umcPolicyGrantedOperationSet']['value']:
-				self._append(LDAP_ACLs.FROM_USER, self.lo.get(value))
+				self._append(LDAP_ACLs.FROM_USER, self.lo.get(value.decode('UTF-8')))
 
 		# TODO: check for nested groups
 		groupDNs = self.lo.searchDn(filter=filter_format('uniqueMember=%s', [userdn]))
 
 		for gDN in groupDNs:
 			policy = self._get_policy_for_dn(gDN)
-			if not policy:
-				continue
-			if 'umcPolicyGrantedOperationSet' in policy:
+			if policy and 'umcPolicyGrantedOperationSet' in policy:
 				for value in policy['umcPolicyGrantedOperationSet']['value']:
-					self._append(LDAP_ACLs.FROM_GROUP, self.lo.get(value))
+					self._append(LDAP_ACLs.FROM_GROUP, self.lo.get(value.decode('UTF-8')))
 
 		# make the ACLs unique
 		getvals = operator.itemgetter('fromUser', 'host', 'command', 'options', 'flavor')
