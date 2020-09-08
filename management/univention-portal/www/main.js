@@ -1467,6 +1467,8 @@ define([
 				this._refresh(portalTools.RenderMode.NORMAL).then(lang.hitch(this, function() {
 					this._addLinks();
 				}));
+				// Do not force a relogin on the portal
+				tools.checkSession(false);
 			}));
 		},
 
@@ -2213,7 +2215,7 @@ define([
 
 		_updateSessionState: function() {
 			var isHomeTab = this._selectedIframe === null;
-			if (!isHomeTab || tools.status('loggendIn')) {
+			if (!isHomeTab || tools.status('loggedIn')) {
 				return;
 			}
 			login.sessioninfo().otherwise(lang.hitch(this, function() {
