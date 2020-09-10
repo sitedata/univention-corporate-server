@@ -31,6 +31,7 @@ import cracklib
 import os
 import univention.uldap
 import univention.config_registry as ucr
+from samba import check_password_quality as samba_check_password_quality
 
 
 class Check:
@@ -39,6 +40,7 @@ class Check:
 		self.ConfigRegistry = ucr.ConfigRegistry()
 		self.ConfigRegistry.load()
 
+		self.username = username
 		self.enableQualityCheck = False
 		self.checkHistory = False
 		self.min_length = -1
@@ -49,8 +51,8 @@ class Check:
 
 		self._systemPolicy()
 
-		if username:
-			self._userPolicy(username)
+		if self.username:
+			self._userPolicy(self.username)
 
 	def _getConnection(self):
 		if os.path.exists('/etc/ldap.secret'):
@@ -82,9 +84,12 @@ class Check:
 		if self.ConfigRegistry.get('password/quality/diff_ok', None):
 			cracklib.DIFF_OK = int(self.ConfigRegistry.get('password/quality/diff_ok'))
 
-	def _userPolicy(self, username):
-		self.username = username
+		# optionally activate Microsoft standard criteria
+		self.mspolicy = self.ConfigRegistry.get('password/quality/mspolicy', None)
+		# normalize True values
+		self.mspolicy = self.ConfigRegistry.is_true(value = self.mspolicy) or self.mspolicy
 
+	def _userPolicy(self, username):
 		# username or kerberos principal
 		try:
 			if '@' in self.username:
@@ -104,7 +109,7 @@ class Check:
 					self.enableQualityCheck = True
 		self.pwhistory = self.lo.search(base=dn, attr=['pwhistory'])[0][1].get('pwhistory')
 
-	def check(self, password):
+	def check(self, password, displayname=None):
 		if self.min_length > 0:
 			if len(password) < self.min_length:
 				raise ValueError('Password is too short')
@@ -114,6 +119,19 @@ class Check:
 		# Todo: check history
 
 		if self.enableQualityCheck:
+			if self.mspolicy in (True, 'sufficient'):
+				if not samba_check_password_quality(password):
+					with open('/tmp/2', 'a') as f:
+						f.write('Password does not meet complexity criteria: %s\n' % (password,))
+					raise ValueError('Password does not meet complexity criteria')
+				if self.username and len(self.username) > 3 and self.username in password:
+					raise ValueError('Password contains username')
+				if displayname:
+					for namepart in displayname.split(' ,'):
+						if len(namepart) > 3 and namepart in password:
+							raise ValueError('Password contains parts of name')
+			if self.mspolicy == 'sufficient':
+				return True  # skip all other checks
 			for c in self.forbidden_chars:
 				if c in password:
 					raise ValueError('Password contains forbidden characters')
