@@ -197,28 +197,6 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><filename>debian/join-template.install</filename></term>
-					<listitem>
-						<para>
-							The scripts need to be installed into <filename>/usr/lib/univention-install/</filename>, which is achieved by the following lines:
-						</para>
-						<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/debian/join-template.install" parse="text"/></programlisting>
-						<para>
-							Note that this package also installs an unjoin script.
-						</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
-					<term><filename>debian/join-template.postinst</filename></term>
-					<listitem>
-						<para>
-							The join script should be invoked automatically on master and &ucsBackup; systems.
-							On all other system roles an administrator must run the join script manually through <command>univention-run-join-scripts</command>.
-						</para>
-						<programlisting language="sh"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/debian/join-template.postinst" parse="text"/></programlisting>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
 					<term><filename>debian/control</filename></term>
 					<listitem>
 						<para>
@@ -226,10 +204,19 @@
 							Both packages providing them must be added as additional runtime dependencies.
 						</para>
 						<para>
-							The unjoin functions were added to UCS 3.1-0 only as <ulink url="https://errata.software-univention.de/ucs/3.1/80.html">erratum update 81</ulink>.
-							Because of this the minimum versions must be specified explicitly.
+							The package needs to add <package>univention-join-dev</package> as build dependency.
 						</para>
 						<programlisting language="debcontrol"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/debian/control" parse="text"/></programlisting>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><filename>debian/rules</filename></term>
+					<listitem>
+						<para>
+							During package build time <command>dh-univention-join-install</command> needs to be called.
+							This should be done using the sequence <literal>univention-join</literal> in <filename>debian/rules</filename>:
+						</para>
+						<programlisting language="debcontrol"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/debian/rules" parse="text"/></programlisting>
 					</listitem>
 				</varlistentry>
 			</variablelist>
@@ -883,34 +870,6 @@ ucs_unregisterLDAPExtension "$@" --schema appschemaextension
 						This unjoin script reverts the changes of the join script from <xref linkend="join:minimal"/>.
 					</para>
 					<programlisting language="sh"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/50join-template-uninstall.uinst" parse="text"/></programlisting>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><filename>debian/join-template.prerm</filename></term>
-				<listitem>
-					<para>
-						The unjoin script has to be copied to the join script directory before it gets removed:
-					</para>
-					<programlisting language="sh"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/debian/join-template.prerm" parse="text"/></programlisting>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><filename>debian/join-template.postrm</filename></term>
-				<listitem>
-					<para>
-						The unjoin script should be invoked automatically on master and &ucsBackup; systems after the package is removed.
-						On all other system roles an administrator must run the join script manually through <command>univention-run-join-scripts</command>.
-					</para>
-					<programlisting language="sh"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/debian/join-template.postrm" parse="text"/></programlisting>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><filename>debian/join-template.postinst</filename></term>
-				<listitem>
-					<para>
-						In case the package is installed again and the unjoin script still exists, because it was never executed, the unjoin script must be removed:
-					</para>
-					<programlisting language="sh"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="join-template/debian/join-template.postinst" parse="text"/></programlisting>
 				</listitem>
 			</varlistentry>
 		</variablelist>
