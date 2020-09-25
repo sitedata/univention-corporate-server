@@ -56,3 +56,20 @@ Description: UMC module for system join
  integrated, directory driven solution for managing
  corporate environments. For more information about UCS,
  refer to: https://www.univention.de/
+
+Package: univention-join-dev
+Architecture: all
+Depends:
+ python-univention-debhelper,
+ python3-univention-debhelper,
+ ${misc:Depends},
+ ${perl:Depends},
+ ${python:Depends},
+Description: UCS - join domains (development files)
+ This package contains the files needed to develop packages
+ that use univention-join.
+ .
+ It is part of Univention Corporate Server (UCS), an
+ integrated, directory driven solution for managing
+ corporate environments. For more information about UCS,
+ refer to: https://www.univention.de/

@@ -1,0 +1,119 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+#
+# Univention Join
+"""
+Install Join Scripts.
+"""
+#
+# Copyright 2020 Univention GmbH
+#
+# https://www.univention.de/
+#
+# All rights reserved.
+#
+# The source code of this program is made available
+# under the terms of the GNU Affero General Public License version 3
+# (GNU AGPL V3) as published by the Free Software Foundation.
+#
+# Binary versions of this program provided by Univention to you as
+# well as other copyrighted, protected or trademarked materials like
+# Logos, graphics, fonts, specific documentations and configurations,
+# cryptographic keys etc. are subject to a license agreement between
+# you and Univention and not subject to the GNU AGPL V3.
+#
+# In the case you use this program under the terms of the GNU AGPL V3,
+# the program is provided in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public
+# License with the Debian GNU/Linux or Univention distribution in file
+# /usr/share/common-licenses/AGPL-3; if not, see
+# <https://www.gnu.org/licenses/>.
+
+from __future__ import print_function
+
+import os
+import pipes
+from argparse import ArgumentParser
+
+import univention.debhelper as dh_ucs
+
+
+class JoinDebhelper(object):
+
+	def __init__(self, package):
+		self.package = package
+		self.destdir = os.path.join('debian', self.package)
+
+	def dh_install(self):
+		joinscript = self.install_joinscript()
+		unjoin_script = self.install_unjoinscript()
+		self.install_deb_scripts(joinscript, unjoin_script)
+
+	def install_joinscript(self):
+		join_script_base = '%s.inst' % (self.package,)
+		join_scripts = [filename for filename in os.listdir('.') if filename.endswith(join_script_base)]
+		if not join_scripts:
+			return
+		join_script = join_scripts[0]
+		join_dest = os.path.join(self.destdir, 'usr/lib/univention-install')
+		dh_ucs.doIt('install', '-d', join_dest)
+		dh_ucs.doIt('install', '-p', '-t', join_dest, '-m', '755', join_script)
+		return join_script
+
+	def install_unjoinscript(self):
+		unjoin_script_base = '%s.uinst' % (self.package,)
+		unjoin_scripts = [filename for filename in os.listdir('.') if filename.endswith(unjoin_script_base)]
+		if not unjoin_scripts:
+			return
+		unjoin_script = unjoin_scripts[0]
+		unjoin_dest = os.path.join(self.destdir, 'usr/lib/univention-uninstall')
+		dh_ucs.doIt('install', '-d', unjoin_dest)
+		dh_ucs.doIt('install', '-p', '-t', unjoin_dest, '-m', '755', unjoin_script)
+		return unjoin_script
+
+	def install_deb_scripts(self, join_script, unjoin_script):
+		if join_script and unjoin_script:
+			with open(os.path.join('debian', '%s.postinst.debhelper' % (self.package,)), 'a') as f_postinst:
+				if unjoin_script:
+					f_postinst.write('''
+if [ "$1" = "configure" ]; then
+	uinst=/usr/lib/univention-install/%s
+	[ -e "$uinst" ] && rm "$uinst"
+fi
+''' % (pipes.quote(unjoin_script), ))
+				if join_script:
+					f_postinst.write('''
+# run join script on Primary Directory Node and Backup Directory Node
+. /usr/share/univention-lib/base.sh
+call_joinscript %s || true
+''' % (pipes.quote(join_script),))
+		if unjoin_script:
+			with open(os.path.join('debian', '%s.prerm.debhelper' % (self.package,)), 'a') as f_prerm:
+				f_prerm.write('''
+if [ "$1" = "remove" ]; then
+	cp /usr/lib/univention-uninstall/%s /usr/lib/univention-install/
+fi
+''' % (pipes.quote(unjoin_script),))
+			with open(os.path.join('debian', '%s.postrm.debhelper' % (self.package,)), 'a') as f_postrm:
+				f_postrm.write('''
+# run unjoin script
+if [ "$1" = "remove" ]; then
+	. /usr/share/univention-lib/base.sh
+	call_unjoinscript %s || true
+fi
+''' % (pipes.quote(unjoin_script),))
+
+
+def main():
+	parser = ArgumentParser()
+	parser.parse_args()
+	for package in dh_ucs.binary_packages():
+		JoinDebhelper(package).dh_install()
+
+
+if __name__ == '__main__':
+	main()
