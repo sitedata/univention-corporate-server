@@ -7,6 +7,7 @@ Build-Depends:
  debhelper,
  univention-config-dev (>= 15.0.3),
  univention-debhelper,
+ univention-join-dev (>= 12),
 
 Package: univention-postgresql
 Architecture: all

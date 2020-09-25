@@ -10,6 +10,7 @@ Build-Depends:
  python3-all,
  univention-config-dev (>= 15.0.3),
  univention-debhelper,
+ univention-join-dev (>= 12),
  univention-management-console-dev (>= 12.0.2),
 Standards-Version: 3.7.2
 
@@ -17,8 +18,8 @@ Package: univention-admin-diary-backend
 Architecture: all
 Depends:
  python-pyparsing,
- python3-pyparsing,
  python-univention-admin-diary-backend (= ${binary:Version}),
+ python3-pyparsing,
  python3-univention-admin-diary-backend (= ${binary:Version}),
  rsyslog-relp,
  ${misc:Depends},
