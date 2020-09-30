@@ -1,3 +1,9 @@
+univention-saml (6.0.2-56) unstable; urgency=medium
+
+  * Bug #51608: fix for file ownership of serviceprovider_enabled_groups.json
+
+ -- Christian Castens <castens@univention.de>  Wed, 30 Sep 2020 12:31:40 +0200
+
 univention-saml (6.0.2-55) unstable; urgency=medium
 
   * Bug #51903: fixed simplesamlphp dependency
